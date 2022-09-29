@@ -1,0 +1,258 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "basics": {
+        "subscription": {
+          "constraints": {
+            "validations": [
+              {
+                "permission": "Microsoft.Authorization/roleDefinitions/write",
+                "message": "Azure user deploying this Managed Application must have permission to assign roles."
+              }
+            ]
+          },
+          "resourceProviders": [
+            "Microsoft.Resources",
+            "Microsoft.OperationalInsights",
+            "Microsoft.OperationsManagement",
+            "Microsoft.ContainerService",
+            "Microsoft.Compute",
+            "Microsoft.Network",
+            "Microsoft.Storage"
+          ]
+        },
+        "resourceGroup": {
+          "allowExisting": true
+        },
+        "location": {
+          "visible": true,
+          "resourceTypes": [
+            "Microsoft.ContainerService/managedClusters"
+          ]
+        }
+      }
+    },
+    "basics": [
+      {
+        "name": "nodeSize",
+        "type": "Microsoft.Compute.SizeSelector",
+        "label": "Compute Size",
+        "toolTip": "The virtual machine size to use.",
+        "recommendedSizes": [
+          "Standard_D4s_v3",
+          "Standard_D8s_v3"
+        ],
+        "options": {
+          "hideDiskTypeFilter": false
+        },
+        "osPlatform": "Linux",
+        "imageReference": {
+          "publisher": "Canonical",
+          "offer": "UbuntuServer",
+          "sku": "16.04-LTS"
+        },
+        "count": 1,
+        "visible": true
+      },
+      {
+        "name": "nodeCount",
+        "type": "Microsoft.Common.Slider",
+        "min": 3,
+        "max": 10,
+        "label": "Compute Count",
+        "subLabel": "Nodes",
+        "defaultValue": 3,
+        "showStepMarkers": true,
+        "toolTip": "The virtual machine count to use.",
+        "constraints": {
+          "required": true
+        },
+        "visible": true
+      },
+      {
+        "name": "adminGroupId",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Admin Group Id",
+        "defaultValue": "",
+        "toolTip": "The id of a group or user enabled as admin.",
+        "constraints": {
+          "required": true,
+          "regex": "^[0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}$",
+          "validationMessage": "A valid GUID"
+        },
+        "visible": true
+      },
+      {
+        "name": "sshPublicKey",
+        "type": "Microsoft.Common.PasswordBox",
+        "label": {
+          "password": "SSH Public Key",
+          "confirmPassword": ""
+        },
+        "toolTip": "The public SSH key for access to the Servers",
+        "constraints": {
+          "required": true
+        },
+        "options": {
+          "hideConfirmation": true
+        },
+        "visible": true
+      }
+    ],
+    "steps": [
+      {
+        "name": "storageConfigBlade",
+        "label": "Storage",
+        "bladeTitle": "Storage",
+        "elements": [
+          {
+            "name": "storageAccount",
+            "type": "Microsoft.Storage.MultiStorageAccountCombo",
+            "label": {
+              "prefix": "Storage account prefix",
+              "type": "Storage account type"
+            },
+            "toolTip": {
+              "prefix": "A prefix for the storage accounts",
+              "type": "The type of storage account"
+            },
+            "defaultValue": {
+              "prefix": "dp1",
+              "type": "Standard_LRS"
+            },
+            "constraints": {
+              "allowedTypes": [
+                "Premium_LRS",
+                "Standard_LRS",
+                "Standard_GRS"
+              ]
+            },
+            "count": 1
+          },
+          {
+            "name": "specifyPrivateLink",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Specify if Private",
+            "toolTip": "Select 'Yes' if you would like to enable private IP Link.",
+            "visible": true,
+            "defaultValue": "No",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "No",
+                  "value": false
+                },
+                {
+                  "label": "Yes",
+                  "value": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "networkingConfigBlade",
+        "label": "Networking",
+        "elements": [
+          {
+            "name": "networkingInfo",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "The platform requires a network with a subnet.",
+              "link": {
+                "label": "",
+                "uri": ""
+              }
+            }
+          },
+          {
+            "name": "vnet",
+            "type": "Microsoft.Network.VirtualNetworkCombo",
+            "label": {
+              "virtualNetwork": "Virtual network",
+              "subnets": "Subnets"
+            },
+            "toolTip": {
+              "virtualNetwork": "",
+              "subnets": ""
+            },
+            "defaultValue": {
+              "name": "pltvnet",
+              "addressPrefixSize": "/16"
+            },
+            "constraints": {
+              "minAddressPrefixSize": "/16"
+            },
+            "options": {
+              "hideExisting": false
+            },
+            "subnets": {
+              "clustersubnet": {
+                "label": "Cluster Subnet",
+                "defaultValue": {
+                  "name": "clustersubnet",
+                  "addressPrefixSize": "/24"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/24",
+                  "minAddressCount": 12,
+                  "requireContiguousAddresses": true
+                }
+              },
+              "podsubnet": {
+                "label": "Pod Subnet",
+                "defaultValue": {
+                  "name": "podsubnet",
+                  "addressPrefixSize": "/24"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/24",
+                  "minAddressCount": 12,
+                  "requireContiguousAddresses": true
+                }
+              }
+            },
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "tags",
+        "label": "Tags",
+        "elements": [
+          {
+            "name": "tagsByResource",
+            "type": "Microsoft.Common.TagsByResource",
+            "toolTip": "Tags for resources being created",
+            "resources": [
+              "Microsoft.Storage/storageAccounts",
+              "Microsoft.Network/virtualNetworks"
+            ]
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "nodeSize": "[basics('nodeSize')]",
+      "nodeCount": "[basics('nodeCount')]",
+      "adminPublicKey": "[basics('adminGroupId')]",
+      "adminGroupObjectId": "[basics('sshPublicKey')]",
+      "virtualNetworkName": "[steps('deploymentDetails').vnet.name]",
+      "virtualNetworkNewOrExisting": "[steps('deploymentDetails').vnet.newOrExisting]",
+      "virtualNetworkAddressPrefix": "[first(steps('deploymentDetails').vnet.addressPrefixes)]",
+      "virtualNetworkResourceGroup": "[steps('deploymentDetails').vnet.resourceGroup]",
+      "subnetName": "[steps('networkingConfigBlade').vnet.subnets.clustersubnet.name]",
+      "subnetAddressPrefix": "[steps('networkingConfigBlade').vnet.subnets.clustersubnet.addressPrefix]",
+      "podSubnetName": "[steps('networkingConfigBlade').vnet.subnets.podsubnet.name]",
+      "podSubnetAddressPrefix": "[steps('networkingConfigBlade').vnet.subnets.podsubnet.addressPrefix]", 
+      "storageAccountType": "[steps('storageConfigBlade').storageAccount.type]",
+      "storageAccountPrefix": "[steps('storageConfig').storageAccounts.prefix]"
+    }
+  }
+}

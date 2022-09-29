@@ -1,0 +1,41 @@
+# name: Release
+
+# on:
+#   workflow_run:
+#     workflows: ["Build"]
+#     types:
+#       - completed
+
+# env:
+#   CLI_VERSION: 2.40.0
+
+# jobs:
+#   Release:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: write
+#     steps:
+#       - name: Github Checkout
+#         uses: actions/checkout@v2
+
+#       - uses: actions/download-artifact@v3
+#         with:
+#           name: mainTemplate.json
+#           path: mainTemplate.json
+
+#       - name: Create the Managed Application Artifact
+#         run: |
+#           rm -f ama.zip
+#           zip ama.zip createUiDefinition.json mainTemplate.json viewDefinition.json
+#         shell: bash
+
+#       - name: Find Latest Tag
+#         uses: oprypin/find-latest-tag@v1.1.0
+#         id: latest
+#         with:
+#           repository: ${{ github.repository }}
+
+#       - uses: ncipollo/release-action@v1
+#         with:
+#           tag: ${{ steps.latest.outputs.tag }}
+#           artifacts: "ama.zip"
