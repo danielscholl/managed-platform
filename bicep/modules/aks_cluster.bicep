@@ -54,8 +54,6 @@ param version string = '1.24.3'
 ])
 param aksUpgradeChannel string = 'stable'
 
-@description('Specifies the AAD group object IDs that will have admin role of the cluster.')
-param adminGroupObjectIDs array = []
 
 @description('Specify the Network Settings')
 param networkSettings object = {
@@ -67,13 +65,6 @@ param networkSettings object = {
   dockerBridgeCidr: '172.16.4.1/22' // Used for the default docker0 bridge network that is required when using Docker as the Container Runtime.  Not used by AKS or Docker and is only cluster-routable.  Cluster IP based addresses are allocated from this range.  Can be safely reused in multiple clusters.
   outboundType: 'loadBalancer' // Specifies outbound (egress) routing method. - loadBalancer or userDefinedRouting.
   loadBalancerSku: 'standard' // Specifies the sku of the load balancer used by the virtual machine scale sets used by nodepools.
-}
-
-@description('Specify the Azure Active Directory Settings')
-param aadSettings object = {
-  managed: true // 'Specifies whether to enable managed AAD integration.'
-  enableAzureRBAC: true // Specifies whether to  to enable Azure RBAC for Kubernetes authorization.
-  tenantID: subscription().tenantId // Specifies the tenant id of the Azure Active Directory used by the AKS cluster for authentication.
 }
 
 @description('Specify the API Server Access Settings')
@@ -175,7 +166,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
 
   properties: {
     kubernetesVersion: version
-    nodeResourceGroup: '${name}-resources'
+    nodeResourceGroup: '${resourceGroup().name}-aks'
     dnsPrefix: dnsPrefix
 
     agentPoolProfiles: [
@@ -231,13 +222,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
       dockerBridgeCidr: networkSettings.dockerBridgeCidr
       outboundType: networkSettings.outboundType
       loadBalancerSku: networkSettings.loadBalancerSku
-    }
-
-    aadProfile: {
-      managed: aadSettings.managed
-      enableAzureRBAC: aadSettings.enableAzureRBAC
-      adminGroupObjectIDs: adminGroupObjectIDs
-      tenantID: aadSettings.tenantID
     }
 
     enableRBAC: true

@@ -40,9 +40,6 @@ param aksVersion string = '1.24.3'
 @description('SSH Public Key')
 param adminPublicKey string
 
-@description('Specifies the AAD group object Id that will have admin role for the cluster.')
-param adminGroupObjectId string
-
 @description('The virtual machine size for the User Pool.')
 param nodeSize string = 'Standard_D4s_v3'
 
@@ -138,7 +135,6 @@ module cluster 'modules/aks_cluster.bicep' = {
     subnetId: subnetId
     podSubnetId: podSubnetId
     adminPublicKey: adminPublicKey
-    adminGroupObjectIDs: [adminGroupObjectId]
   }
   dependsOn: [
     clusterIdentity

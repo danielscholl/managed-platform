@@ -73,19 +73,6 @@
         "visible": true
       },
       {
-        "name": "adminGroupId",
-        "type": "Microsoft.Common.TextBox",
-        "label": "Admin Group Id",
-        "defaultValue": "",
-        "toolTip": "The id of a group or user enabled as admin.",
-        "constraints": {
-          "required": true,
-          "regex": "^[0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}$",
-          "validationMessage": "A valid GUID"
-        },
-        "visible": true
-      },
-      {
         "name": "sshPublicKey",
         "type": "Microsoft.Common.PasswordBox",
         "label": {
@@ -231,7 +218,10 @@
             "toolTip": "Tags for resources being created",
             "resources": [
               "Microsoft.Storage/storageAccounts",
-              "Microsoft.Network/virtualNetworks"
+              "Microsoft.Network/virtualNetworks",
+              "Microsoft.ContainerService/ManagedClusters",
+              "Microsoft.KeyVault/vaults",
+              "Microsoft.OperationalInsights/workspaces"
             ]
           }
         ]
@@ -241,7 +231,6 @@
       "location": "[location()]",
       "nodeSize": "[basics('nodeSize')]",
       "nodeCount": "[basics('nodeCount')]",
-      "adminGroupObjectId": "[basics('adminGroupId')]", 
       "adminPublicKey": "[basics('sshPublicKey')]",
       "virtualNetworkName": "[steps('deploymentDetails').vnet.name]",
       "virtualNetworkNewOrExisting": "[steps('deploymentDetails').vnet.newOrExisting]",
