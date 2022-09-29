@@ -67,7 +67,6 @@ module stgModule 'modules/azure_storage.bicep' = {
 module keyvault 'modules/azure_keyvault.bicep' = {
   name: 'azure_keyvault'
   params: {
-      prefix: prefix
       location: location
   }
 }
@@ -76,7 +75,7 @@ module keyvault 'modules/azure_keyvault.bicep' = {
 module clusterIdentity 'modules/user_identity.bicep' = {
   name: 'user_identity_cluster'
   params: {
-    name: '${prefix}-cluster-identity'
+    name: '${resourceGroup().name}-cluster-identity'
   }
 }
 
@@ -84,7 +83,7 @@ module clusterIdentity 'modules/user_identity.bicep' = {
 module podIdentity 'modules/user_identity.bicep' = {
   name: 'user_identity_pod'
   params: {
-    name: '${prefix}-pod-identity'
+    name: '${resourceGroup().name}-pod-identity'
   }
 }
 
@@ -92,7 +91,6 @@ module podIdentity 'modules/user_identity.bicep' = {
 module logAnalytics 'modules/azure_log_analytics.bicep' = {
   name: 'log_analytics'
   params: {
-    name: '${prefix}-logs'
     sku: 'PerGB2018'
     retentionInDays: 30
   }

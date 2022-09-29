@@ -1,9 +1,9 @@
 targetScope = 'resourceGroup'
 
-@minLength(3)
-@maxLength(24)
+@minLength(5)
+@maxLength(50)
 @description('Resource Name.')
-param prefix string = 'plt'
+param name string = '${uniqueString(resourceGroup().id)}kv'
 
 @description('Resource Location.')
 param location string = resourceGroup().location
@@ -34,9 +34,9 @@ param permissions object = {
 @minValue(7)
 param softDeleteRetentionInDays int = 7
 
-var cleanPrefix = substring(prefix, 0, min(length(prefix), 5))
-var unique = uniqueString(resourceGroup().id)
-var name = '${cleanPrefix}${unique}'
+// var cleanPrefix = substring(prefix, 0, min(length(prefix), 5))
+// var unique = uniqueString(resourceGroup().id)
+// var name = '${cleanPrefix}${unique}'
 
 var enablePrivateLink = privateLinkSettings.vnetId != 'null' && privateLinkSettings.subnetId != 'null'
 
