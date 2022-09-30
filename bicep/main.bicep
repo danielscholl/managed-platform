@@ -4,7 +4,7 @@ param storageAccountType string
 @description('Provide a prefix name for the storage account.')
 param storageAccountPrefix string = 'sa'
 
-param storagePrivateLink string = 'no'
+param storagePrivateLink bool = false
 
 @description('Specify the Azure region to place the application definition.')
 param location string = resourceGroup().location
@@ -155,4 +155,4 @@ module cluster 'modules/aks_cluster.bicep' = {
   ]
 }
 
-output storagePrivateLink string = storagePrivateLink
+output storagePrivateLink bool = storagePrivateLink
