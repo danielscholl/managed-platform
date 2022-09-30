@@ -182,7 +182,7 @@
               "clustersubnet": {
                 "label": "Cluster Subnet",
                 "defaultValue": {
-                  "name": "clustersubnet",
+                  "name": "nodesubnet",
                   "addressPrefixSize": "/24"
                 },
                 "constraints": {
