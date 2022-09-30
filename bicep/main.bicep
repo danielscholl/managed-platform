@@ -1,17 +1,14 @@
-@description('Provide a prefix for the storage account.')
-param prefix string = 'iac'
-
 @description('Provide a type for the storage account.')
 param storageAccountType string
 
 @description('Provide a prefix name for the storage account.')
-param storageAccountPrefix string = 'sa1'
+param storageAccountPrefix string = 'sa'
 
 @description('Specify the Azure region to place the application definition.')
 param location string = resourceGroup().location
 
-@description('New or Existing VNet Name')
-param virtualNetworkName string = '${prefix}-vnet'
+@description('Name of the Virtual Network')
+param virtualNetworkName string = '${uniqueString(resourceGroup().id)}-network'
 
 @description('Boolean indicating whether the VNet is new or existing')
 param virtualNetworkNewOrExisting string = 'new'
