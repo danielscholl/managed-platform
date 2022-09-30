@@ -74,19 +74,15 @@
       },
       {
         "name": "sshPublicKey",
-        "type": "Microsoft.Common.PasswordBox",
-        "label": {
-          "password": "SSH Public Key",
-          "confirmPassword": ""
-        },
-        "toolTip": "The public SSH key for access to the Servers",
-        "constraints": {
-          "required": true
-        },
+        "type": "Microsoft.Common.TextBlock",
+        "visible": true,
         "options": {
-          "hideConfirmation": true
-        },
-        "visible": true
+          "text": "The public SSH key for access to the Servers.",
+          "link": {
+            "label": "Generate SSH key",
+            "uri": "https://docs.microsoft.com/azure/virtual-machines/linux/mac-create-ssh-keys"
+          }
+        }
       }
     ],
     "steps": [
@@ -150,11 +146,7 @@
             "type": "Microsoft.Common.TextBlock",
             "visible": true,
             "options": {
-              "text": "The platform requires a network with a subnet.",
-              "link": {
-                "label": "",
-                "uri": ""
-              }
+              "text": "The platform requires a network with a subnet."
             }
           },
           {
@@ -165,8 +157,8 @@
               "subnets": "Subnets"
             },
             "toolTip": {
-              "virtualNetwork": "",
-              "subnets": ""
+              "virtualNetwork": "The virtual network to use",
+              "subnets": "The subnet to use"
             },
             "defaultValue": {
               "name": "pltvnet",
@@ -229,19 +221,20 @@
     ],
     "outputs": {
       "location": "[location()]",
-      "nodeSize": "[basics('nodeSize')]",
+      "vmSize": "[basics('nodeSize')]",
       "nodeCount": "[basics('nodeCount')]",
       "adminPublicKey": "[basics('sshPublicKey')]",
-      "virtualNetworkName": "[steps('deploymentDetails').vnet.name]",
-      "virtualNetworkNewOrExisting": "[steps('deploymentDetails').vnet.newOrExisting]",
-      "virtualNetworkAddressPrefix": "[first(steps('deploymentDetails').vnet.addressPrefixes)]",
-      "virtualNetworkResourceGroup": "[steps('deploymentDetails').vnet.resourceGroup]",
+      "virtualNetworkName": "[steps('networkingConfigBlade').vnet.name]",
+      "virtualNetworkNewOrExisting": "[steps('networkingConfigBlade').vnet.newOrExisting]",
+      "virtualNetworkAddressPrefix": "[first(steps('networkingConfigBlade').vnet.addressPrefixes)]",
+      "virtualNetworkResourceGroup": "[steps('networkingConfigBlade').vnet.resourceGroup]",
       "subnetName": "[steps('networkingConfigBlade').vnet.subnets.clustersubnet.name]",
       "subnetAddressPrefix": "[steps('networkingConfigBlade').vnet.subnets.clustersubnet.addressPrefix]",
       "podSubnetName": "[steps('networkingConfigBlade').vnet.subnets.podsubnet.name]",
       "podSubnetAddressPrefix": "[steps('networkingConfigBlade').vnet.subnets.podsubnet.addressPrefix]", 
       "storageAccountType": "[steps('storageConfigBlade').storageAccount.type]",
-      "storageAccountPrefix": "[steps('storageConfig').storageAccounts.prefix]"
+      "storageAccountPrefix": "[steps('storageConfigBlade').storageAccount.prefix]",
+      "storagePrivateLink": "[steps('storageConfigBlade').specifyPrivateLink]"
     }
   }
 }

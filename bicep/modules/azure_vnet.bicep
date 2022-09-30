@@ -76,7 +76,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 }
 
 // Apply Resource Lock
-resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock) {
+resource lock 'Microsoft.Authorization/locks@2017-04-01' = if (enableDeleteLock) {
   scope: vnet
 
   name: '${vnet.name}-lock'
@@ -84,7 +84,6 @@ resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock)
     level: 'CanNotDelete'
   }
 }
-
 
 
 // Hook up Vnet Diagnostics
@@ -110,7 +109,7 @@ resource vnetDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-previ
 }
 
 // Add role assignments
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = [for item in rbacPermissions: if (item.enabled) {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for item in rbacPermissions: if (item.enabled) {
   name: guid(vnet.id, item.principalId, item.roleDefinitionResourceId)
   scope: vnet
   properties: {

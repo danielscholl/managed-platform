@@ -22,16 +22,15 @@ param principalId string = 'null'
 
 @description('Key Vault Defined Access Policies.')
 param permissions object = {
-  keys: []
   secrets: [
     'get'
     'list'
   ]
-  certificates: []
 }
 
 @description('Key Vault Retention Days.')
 @minValue(7)
+@maxValue(14)
 param softDeleteRetentionInDays int = 7
 
 @description('Array of objects that describe RBAC permissions, format { roleDefinitionResourceId (string), principalId (string), principalType (enum), enabled (bool) }. Ref: https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep')
@@ -47,10 +46,8 @@ param rbacPermissions array = [
 ]
 
 
-var enablePrivateLink = privateLinkSettings.vnetId != 'null' && privateLinkSettings.subnetId != 'null'
-
 // Create Azure Key Vault
-resource keyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
+resource keyvault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: replace('${name}', '-', '')
   location: location
   tags: tags
@@ -81,7 +78,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
   }
 }
 
-resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock) {
+resource lock 'Microsoft.Authorization/locks@2017-04-01' = if (enableDeleteLock) {
   scope: keyvault
 
   name: '${keyvault.name}-lock'
@@ -91,7 +88,7 @@ resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock)
 }
 
 // Add role assignments
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = [for item in rbacPermissions: if (item.enabled) {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for item in rbacPermissions: if (item.enabled) {
   name: guid(keyvault.id, item.principalId, item.roleDefinitionResourceId)
   scope: keyvault
   properties: {
@@ -105,18 +102,21 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-prev
 // Private Link
 ////////////////
 
+
 @description('Settings Required to Enable Private Link')
 param privateLinkSettings object = {
-  subnetId: null // Specify the Subnet for the Private Endpoint
-  vnetId: null // Specify the Virtual Network for Virtual Network Link
+  subnetId: '1' // Specify the Subnet for Private Endpoint
+  vnetId: '1'  // Specify the Virtual Network for Virtual Network Link
 }
+
+var enablePrivateLink = privateLinkSettings.vnetId != '1' && privateLinkSettings.subnetId != '1'
 
 @description('Specifies the name of the private link to the Azure Container Registry.')
 param privateEndpointName string = 'kvPrivateEndpoint'
 
 var privateDNSZoneName = 'privatelink.vaultcore.azure.net'
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = if (privateLinkSettings.vnetId != null && privateLinkSettings.subnetId != null) {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = if (enablePrivateLink) {
   name: privateEndpointName
   location: location
   properties: {
@@ -145,7 +145,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-02-01' = if (p
   ]
 }
 
-resource virtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (privateLinkSettings.vnetId != null && privateLinkSettings.subnetId != null) {
+resource virtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (enablePrivateLink) {
   name: '${privateDNSZone.name}/${privateDNSZone.name}-link'
   location: 'global'
   properties: {
@@ -156,12 +156,12 @@ resource virtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   }
 }
 
-resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (privateLinkSettings.vnetId != null && privateLinkSettings.subnetId != null) {
+resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (enablePrivateLink) {
   name: privateDNSZoneName
   location: 'global'
 }
 
-resource privateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = if (privateLinkSettings.vnetId != null && privateLinkSettings.subnetId != null) {
+resource privateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = if (enablePrivateLink) {
   name: '${privateEndpoint.name}/dnsgroupname'
   properties: {
     privateDnsZoneConfigs: [

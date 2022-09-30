@@ -70,7 +70,7 @@ resource lock 'Microsoft.Authorization/locks@2017-04-01' = if (enableDeleteLock)
 }
 
 // Add role assignments
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = [for item in rbacPermissions: if (item.enabled) {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for item in rbacPermissions: if (item.enabled) {
   name: guid(storage.id, item.principalId, item.roleDefinitionResourceId)
   scope: storage
   properties: {
@@ -86,11 +86,12 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-prev
 
 @description('Settings Required to Enable Private Link')
 param privateLinkSettings object = {
-  subnetId: null // Specify the Subnet for Private Endpoint
-  vnetId: null // Specify the Virtual Network for Virtual Network Link
+  subnetId: '1' // Specify the Subnet for Private Endpoint
+  vnetId: '1'  // Specify the Virtual Network for Virtual Network Link
 }
 
-var enablePrivateLink = privateLinkSettings.vnetId != 'null' && privateLinkSettings.subnetId != 'null'
+var enablePrivateLink = privateLinkSettings.vnetId != '1' && privateLinkSettings.subnetId != '1'
+
 
 @description('Specifies the name of the private link to the Azure Container Registry.')
 param privateEndpointName string = 'storagePrivateEndpoint'
@@ -98,13 +99,13 @@ param privateEndpointName string = 'storagePrivateEndpoint'
 var publicDNSZoneForwarder = 'blob.${environment().suffixes.storage}'
 var privateDnsZoneName = 'privatelink.${publicDNSZoneForwarder}'
 
-resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (privateLinkSettings.subnetId != null && privateLinkSettings.vnetId != null) {
+resource privateDNSZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (enablePrivateLink) {
   name: privateDnsZoneName
   location: 'global'
   properties: {}
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = if (privateLinkSettings.subnetId != null && privateLinkSettings.vnetId != null) {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = if (enablePrivateLink) {
   name: privateEndpointName
   location: location
   properties: {
@@ -128,7 +129,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = if (p
   ]
 }
 
-resource privateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = if (privateLinkSettings.vnetId != null && privateLinkSettings.subnetId != null) {
+resource privateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = if (enablePrivateLink) {
   name: '${privateEndpoint.name}/dnsgroupname'
   properties: {
     privateDnsZoneConfigs: [
@@ -146,7 +147,7 @@ resource privateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
 }
 
 #disable-next-line BCP081
-resource virtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2022-01-01' = if (privateLinkSettings.vnetId != null && privateLinkSettings.subnetId != null) {
+resource virtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (enablePrivateLink) {
   parent: privateDNSZone
   name: 'link_to_vnet'
   location: 'global'

@@ -4,6 +4,8 @@ param storageAccountType string
 @description('Provide a prefix name for the storage account.')
 param storageAccountPrefix string = 'sa'
 
+param storagePrivateLink string = 'no'
+
 @description('Specify the Azure region to place the application definition.')
 param location string = resourceGroup().location
 
@@ -38,7 +40,7 @@ param aksVersion string = '1.24.3'
 param adminPublicKey string
 
 @description('The virtual machine size for the User Pool.')
-param nodeSize string = 'Standard_D4s_v3'
+param vmSize string = 'Standard_D4s_v3'
 
 @description('The number of nodes in the User Pool.')
 param nodeCount int = 3
@@ -120,8 +122,8 @@ module vnet 'modules/azure_vnet.bicep' = if (virtualNetworkNewOrExisting == 'new
     rbacPermissions: [
       {
         roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7' // Network Contributor
-        principalId: clusterIdentity
-        principalType: 'User'
+        principalId: clusterIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
         enabled: true
       }
     ]
@@ -138,7 +140,7 @@ module cluster 'modules/aks_cluster.bicep' = {
     name: '${uniqueString(resourceGroup().id)}-cluster'
     location: location
     version: aksVersion
-    nodeSize: nodeSize
+    vmSize: vmSize
     nodeCount: nodeCount
     identityId: clusterIdentity.outputs.resourceId
     workspaceId: logAnalytics.outputs.Id
@@ -152,3 +154,5 @@ module cluster 'modules/aks_cluster.bicep' = {
     vnet
   ]
 }
+
+output storagePrivateLink string = storagePrivateLink

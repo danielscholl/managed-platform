@@ -112,7 +112,7 @@ resource logAnalyticsDataSource 'Microsoft.OperationalInsights/workspaces/dataSo
   properties: dataSource.properties
 }]
 
-resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock) {
+resource lock 'Microsoft.Authorization/locks@2017-04-01' = if (enableDeleteLock) {
   scope: logAnalyticsWorkspace
 
   name: lockName

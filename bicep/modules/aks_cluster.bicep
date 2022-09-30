@@ -10,7 +10,7 @@ param location string = resourceGroup().location
 param nodeCount int = 3
 
 @description('Specify the Server Size for the User Node Pool.')
-param nodeSize string = 'Standard_D4s_v3'
+param vmSize string = 'Standard_D4s_v3'
 
 @description('Specify the cluster nodes subnet.')
 param subnetId string
@@ -28,7 +28,6 @@ param identityId string
 param adminUser string = 'azureuser'
 
 @description('Specify the SSH Public Key for Admin Access to the Cluster Nodes')
-@secure()
 param adminPublicKey string
 
 @description('Specifies the DNS prefix specified when creating the managed cluster.')
@@ -118,7 +117,7 @@ param defaultNodePool object = {
 param userNodePool object = {
   name: 'nodepool1'
   count: nodeCount
-  vmSize: nodeSize
+  vmSize: vmSize
   osDiskSizeGB: 100
   osDiskType: 'Ephemeral'
   maxPods: 30
