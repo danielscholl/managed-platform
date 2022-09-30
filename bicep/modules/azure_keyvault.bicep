@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 @minLength(5)
 @maxLength(50)
 @description('Resource Name.')
-param name string = '${uniqueString(resourceGroup().id)}kv'
+param name string = 'kv${uniqueString(resourceGroup().id)}'
 
 @description('Resource Location.')
 param location string = resourceGroup().location

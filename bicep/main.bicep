@@ -67,6 +67,7 @@ module stgModule 'modules/azure_storage.bicep' = {
 module keyvault 'modules/azure_keyvault.bicep' = {
   name: 'azure_keyvault'
   params: {
+      name: 'kv${uniqueString(resourceGroup().id)}'
       location: location
   }
 }
@@ -75,7 +76,7 @@ module keyvault 'modules/azure_keyvault.bicep' = {
 module clusterIdentity 'modules/user_identity.bicep' = {
   name: 'user_identity_cluster'
   params: {
-    name: '${resourceGroup().name}-cluster-identity'
+    name: '${uniqueString(resourceGroup().id)}-cluster'
   }
 }
 
@@ -83,7 +84,7 @@ module clusterIdentity 'modules/user_identity.bicep' = {
 module podIdentity 'modules/user_identity.bicep' = {
   name: 'user_identity_pod'
   params: {
-    name: '${resourceGroup().name}-pod-identity'
+    name: '${uniqueString(resourceGroup().id)}-pod'
   }
 }
 
@@ -91,6 +92,7 @@ module podIdentity 'modules/user_identity.bicep' = {
 module logAnalytics 'modules/azure_log_analytics.bicep' = {
   name: 'log_analytics'
   params: {
+    name: '${uniqueString(resourceGroup().id)}-logs'
     sku: 'PerGB2018'
     retentionInDays: 30
   }
@@ -124,7 +126,7 @@ module vnet 'modules/azure_vnet.bicep' = if (virtualNetworkNewOrExisting == 'new
 module cluster 'modules/aks_cluster.bicep' = {
   name: 'azure_kubernetes'
   params: {
-    name: '${prefix}-aks'
+    name: '${uniqueString(resourceGroup().id)}-cluster'
     version: aksVersion
     nodeSize: nodeSize
     nodeCount: nodeCount
