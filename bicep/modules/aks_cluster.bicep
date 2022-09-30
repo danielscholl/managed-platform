@@ -166,7 +166,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
 
   properties: {
     kubernetesVersion: version
-    nodeResourceGroup: '${resourceGroup().name}-aks'
+    nodeResourceGroup: '${resourceGroup().name}-cluster'
     dnsPrefix: dnsPrefix
 
     agentPoolProfiles: [
