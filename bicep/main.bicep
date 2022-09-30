@@ -74,6 +74,7 @@ module clusterIdentity 'modules/user_identity.bicep' = {
   name: 'user_identity_cluster'
   params: {
     name: '${uniqueString(resourceGroup().id)}-cluster'
+    location: location
   }
 }
 
@@ -82,6 +83,7 @@ module podIdentity 'modules/user_identity.bicep' = {
   name: 'user_identity_pod'
   params: {
     name: '${uniqueString(resourceGroup().id)}-pod'
+    location: location
   }
 }
 
@@ -90,6 +92,7 @@ module logAnalytics 'modules/azure_log_analytics.bicep' = {
   name: 'log_analytics'
   params: {
     name: '${uniqueString(resourceGroup().id)}-logs'
+    location: location
     sku: 'PerGB2018'
     retentionInDays: 30
   }
@@ -107,12 +110,21 @@ module vnet 'modules/azure_vnet.bicep' = if (virtualNetworkNewOrExisting == 'new
   name: 'azure_vnet'
   params: {
     name: virtualNetworkName
+    location: location
     workspaceId: logAnalytics.outputs.Id
     addressPrefix: virtualNetworkAddressPrefix
     clusterSubnet: subnetAddressPrefix
     clusterSubnetName: subnetName
     podSubnet: podSubnetAddressPrefix
     podSubnetName: podSubnetName
+    rbacPermissions: [
+      {
+        roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7' // Network Contributor
+        principalId: clusterIdentity
+        principalType: 'User'
+        enabled: true
+      }
+    ]
   }
   dependsOn: [
     clusterIdentity
@@ -124,6 +136,7 @@ module cluster 'modules/aks_cluster.bicep' = {
   name: 'azure_kubernetes'
   params: {
     name: '${uniqueString(resourceGroup().id)}-cluster'
+    location: location
     version: aksVersion
     nodeSize: nodeSize
     nodeCount: nodeCount

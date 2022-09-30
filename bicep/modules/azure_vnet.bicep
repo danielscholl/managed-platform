@@ -30,6 +30,18 @@ param podSubnet string = '10.0.2.0/24'
 @description('Pod Subnet Address Name')
 param podSubnetName string = 'PodSubnet'
 
+@description('Array of objects that describe RBAC permissions, format { roleDefinitionResourceId (string), principalId (string), principalType (enum), enabled (bool) }. Ref: https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep')
+param rbacPermissions array = [
+  /* example
+      {
+        roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/00482a5a-887f-4fb3-b363-3b7fe8e74483' // Key Vault Administrator
+        principalId: '00000000-0000-0000-0000-000000000000' // az ad signed-in-user show --query objectId --output tsv
+        principalType: 'User'
+        enabled: false
+      }
+  */
+]
+
 // Create a Virtual Network
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: name
@@ -73,6 +85,8 @@ resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock)
   }
 }
 
+
+
 // Hook up Vnet Diagnostics
 resource vnetDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (workspaceId != 'null') {
   name: 'vnet-diagnostics'
@@ -94,6 +108,17 @@ resource vnetDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-previ
     vnet
   ]
 }
+
+// Add role assignments
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = [for item in rbacPermissions: if (item.enabled) {
+  name: guid(vnet.id, item.principalId, item.roleDefinitionResourceId)
+  scope: vnet
+  properties: {
+    roleDefinitionId: item.roleDefinitionResourceId
+    principalId: item.principalId
+    principalType: item.principalType
+  }
+}]
 
 output vnetId string = vnet.id
 output clusterSubnetId string = resourceId('Microsoft.Network/virtualNetworks/subnets', name, clusterSubnetName)

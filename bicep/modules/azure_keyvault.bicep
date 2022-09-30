@@ -34,9 +34,18 @@ param permissions object = {
 @minValue(7)
 param softDeleteRetentionInDays int = 7
 
-// var cleanPrefix = substring(prefix, 0, min(length(prefix), 5))
-// var unique = uniqueString(resourceGroup().id)
-// var name = '${cleanPrefix}${unique}'
+@description('Array of objects that describe RBAC permissions, format { roleDefinitionResourceId (string), principalId (string), principalType (enum), enabled (bool) }. Ref: https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep')
+param rbacPermissions array = [
+  /* example
+      {
+        roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/00482a5a-887f-4fb3-b363-3b7fe8e74483' // Key Vault Administrator
+        principalId: '00000000-0000-0000-0000-000000000000' // az ad signed-in-user show --query objectId --output tsv
+        principalType: 'User'
+        enabled: false
+      }
+  */
+]
+
 
 var enablePrivateLink = privateLinkSettings.vnetId != 'null' && privateLinkSettings.subnetId != 'null'
 
@@ -80,6 +89,17 @@ resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock)
     level: 'CanNotDelete'
   }
 }
+
+// Add role assignments
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = [for item in rbacPermissions: if (item.enabled) {
+  name: guid(keyvault.id, item.principalId, item.roleDefinitionResourceId)
+  scope: keyvault
+  properties: {
+    roleDefinitionId: item.roleDefinitionResourceId
+    principalId: item.principalId
+    principalType: item.principalType
+  }
+}]
 
 ////////////////
 // Private Link
