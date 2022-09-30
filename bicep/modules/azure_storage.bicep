@@ -1,9 +1,9 @@
 targetScope = 'resourceGroup'
 
-@minLength(3)
+@minLength(2)
 @maxLength(24)
 @description('Resource Name.')
-param prefix string = 'plt'
+param prefix string = 'iac'
 
 @description('Resource Location.')
 param location string = resourceGroup().location
