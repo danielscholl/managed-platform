@@ -36,9 +36,6 @@ param podSubnetAddressPrefix string = '10.1.1.0/24'
 @description('Version of the AKS Cluster')
 param aksVersion string = '1.24.3'
 
-@description('SSH Public Key')
-param adminPublicKey string
-
 @description('The virtual machine size for the User Pool.')
 param vmSize string = 'Standard_D4s_v3'
 
@@ -146,7 +143,6 @@ module cluster 'modules/aks_cluster.bicep' = {
     workspaceId: logAnalytics.outputs.Id
     subnetId: subnetId
     podSubnetId: podSubnetId
-    adminPublicKey: adminPublicKey
   }
   dependsOn: [
     clusterIdentity

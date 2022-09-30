@@ -24,12 +24,6 @@ param workspaceId string
 @description('Specify the User Managed Identity Resource Id.')
 param identityId string
 
-@description('Specify the UserName for Admin Access to the Cluster Nodes')
-param adminUser string = 'azureuser'
-
-@description('Specify the SSH Public Key for Admin Access to the Cluster Nodes')
-param adminPublicKey string
-
 @description('Specifies the DNS prefix specified when creating the managed cluster.')
 param dnsPrefix string = name
 
@@ -172,17 +166,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
       defaultNodePool
       userNodePool
     ]
-
-    linuxProfile: {
-      adminUsername: adminUser
-      ssh: {
-        publicKeys: [
-          {
-            keyData: adminPublicKey
-          }
-        ]
-      }
-    }
 
     addonProfiles: {
       httpApplicationRouting: {

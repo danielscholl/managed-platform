@@ -71,18 +71,6 @@
           "required": true
         },
         "visible": true
-      },
-      {
-        "name": "sshPublicKey",
-        "type": "Microsoft.Common.TextBlock",
-        "visible": true,
-        "options": {
-          "text": "The public SSH key for access to the Servers.",
-          "link": {
-            "label": "Generate SSH key",
-            "uri": "https://docs.microsoft.com/azure/virtual-machines/linux/mac-create-ssh-keys"
-          }
-        }
       }
     ],
     "steps": [
@@ -223,7 +211,6 @@
       "location": "[location()]",
       "vmSize": "[basics('nodeSize')]",
       "nodeCount": "[basics('nodeCount')]",
-      "adminPublicKey": "[basics('sshPublicKey')]",
       "virtualNetworkName": "[steps('networkingConfigBlade').vnet.name]",
       "virtualNetworkNewOrExisting": "[steps('networkingConfigBlade').vnet.newOrExisting]",
       "virtualNetworkAddressPrefix": "[first(steps('networkingConfigBlade').vnet.addressPrefixes)]",
