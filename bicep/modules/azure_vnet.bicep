@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 @description('Resource Name.')
-param name string = 'net${resourceGroup().name}'
+param name string = 'vnet-${uniqueString(resourceGroup().id)}'
 
 @description('Resource Location.')
 param location string = resourceGroup().location

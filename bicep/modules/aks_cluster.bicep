@@ -132,6 +132,8 @@ param userNodePool object = {
   podSubnetID: podSubnetId
 }
 
+
+
 // AKS Feature Add On Configurations
 var addOn = {
   aciConnectorLinuxEnabled: false // Specifies whether the aciConnectorLinux add-on is enabled or not.
@@ -143,6 +145,8 @@ var addOn = {
   kedaEnabled: true // Specifies whether the keda add-on is enabled or not.
   oidcEnabled: true // Specifies whether the oidc issuer add-on is enabled or not.
   defenderEnabled: true // Specifies whether the defender add-on is enabled or not.
+  meshEnabled: true // Specifies whether the Open Serivce Mesh add-on is enabled or not.
+  fluxEnabled: true // Specifies whether the flux add-on is enabled or not.
 }
 
 resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
@@ -195,6 +199,9 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
       }
       azurekeyvaultsecretsprovider: {
         enabled: addOn.kvCsiDriverEnabled
+      }
+      openServiceMesh: {
+        enabled: addOn.meshEnabled
       }
     }
 
@@ -267,4 +274,22 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
       }
     }
   }
+}
+
+
+resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-preview' = if(addOn.fluxEnabled) {
+  name: 'flux'
+  scope: aks
+  properties: {
+    extensionType: 'microsoft.flux'
+    autoUpgradeMinorVersion: true
+    releaseTrain: 'Stable'
+    scope: {
+      cluster: {
+        releaseNamespace: 'flux-system'
+      }
+    }
+    configurationProtectedSettings: {}
+  }
+  dependsOn: [aks]
 }

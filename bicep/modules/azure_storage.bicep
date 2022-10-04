@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 @minLength(2)
 @maxLength(24)
 @description('Resource Name.')
-param prefix string = 'iac'
+param prefix string = 'sa'
 
 @description('Resource Location.')
 param location string = resourceGroup().location
