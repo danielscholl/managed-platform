@@ -138,10 +138,14 @@ var addOn = {
   azurePolicyEnabled: true // Specifies whether the azurePolicy add-on is enabled or not.
   kubeDashboardEnabled: false // Specifies whether the kubeDashboard add-on is enabled or not.
   httpApplicationRoutingEnabled: true // Specifies whether the httpApplicationRouting add-on is enabled or not.
-  podIdentityProfileEnabled: true // Specifies whether the podIdentityProfile add-on is enabled or not.
+  podIdentityProfileEnabled: false // Specifies whether the podIdentityProfile add-on is enabled or not.
+  kvCsiDriverEnabled: true // Specifies whether the kvCsiDriver add-on is enabled or not.
+  kedaEnabled: true // Specifies whether the keda add-on is enabled or not.
+  oidcEnabled: true // Specifies whether the oidc issuer add-on is enabled or not.
+  defenderEnabled: true // Specifies whether the defender add-on is enabled or not.
 }
 
-resource aks 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
+resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
   name: name
   location: location
 
@@ -189,11 +193,15 @@ resource aks 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
       kubeDashboard: {
         enabled: addOn.kubeDashboardEnabled
       }
+      azurekeyvaultsecretsprovider: {
+        enabled: addOn.kvCsiDriverEnabled
+      }
     }
 
-    podIdentityProfile: {
-      enabled: addOn.podIdentityProfileEnabled
-    }
+      podIdentityProfile: {
+        enabled: addOn.podIdentityProfileEnabled
+      }
+
 
     networkProfile: {
       networkPlugin: networkSettings.networkPlugin
@@ -227,6 +235,36 @@ resource aks 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
       enablePrivateCluster: apiSettings.privateCluster
       privateDNSZone: apiSettings.privateDNSZone
       enablePrivateClusterPublicFQDN: apiSettings.privateClusterPublicFQDN
+    }
+
+    workloadAutoScalerProfile: {
+      keda: {
+        enabled: addOn.kedaEnabled
+      }
+    }
+
+    oidcIssuerProfile: {
+      enabled: addOn.oidcEnabled
+    }
+
+    securityProfile: {
+      defender: {
+        logAnalyticsWorkspaceResourceId: addOn.defenderEnabled ? workspaceId : null
+        securityMonitoring: {
+          enabled: addOn.defenderEnabled
+        }
+      }
+    }
+    storageProfile: {
+      diskCSIDriver: {
+        enabled: true
+      }
+      fileCSIDriver: {
+        enabled: true
+      }
+      snapshotController: {
+        enabled: true
+      }
     }
   }
 }
