@@ -10,7 +10,7 @@ param storagePrivateLink bool = false
 param location string = resourceGroup().location
 
 @description('Name of the Virtual Network')
-param virtualNetworkName string = '${uniqueString(resourceGroup().id)}-network'
+param virtualNetworkName string = 'vnet-${uniqueString(resourceGroup().id)}'
 
 @description('Boolean indicating whether the VNet is new or existing')
 param virtualNetworkNewOrExisting string = 'new'
