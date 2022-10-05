@@ -1,9 +1,9 @@
 targetScope = 'resourceGroup'
 
-@minLength(5)
-@maxLength(50)
-@description('Resource Name.')
-param name string = 'kv-${uniqueString(resourceGroup().id)}'
+@minLength(3)
+@maxLength(20)
+@description('Used to name all resources')
+param resourceName string
 
 @description('Resource Location.')
 param location string = resourceGroup().location
@@ -46,9 +46,11 @@ param rbacPermissions array = [
 ]
 
 
+var name = 'kv-${replace(resourceName, '-', '')}${uniqueString(resourceGroup().id, resourceName)}'
+
 // Create Azure Key Vault
 resource keyvault 'Microsoft.KeyVault/vaults@2022-07-01' = {
-  name: replace('${name}', '-', '')
+  name: length(name) > 24 ? substring(name, 0, 24) : name
   location: location
   tags: tags
   properties: {

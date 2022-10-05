@@ -1,7 +1,10 @@
 targetScope = 'resourceGroup'
 
-@description('Name of the workspace')
-param name string = 'log-${resourceGroup().name}'
+@minLength(4)
+@maxLength(63)
+@description('Used to name all resources')
+param resourceName string
+
 
 @description('Workspace Location.')
 param location string = resourceGroup().location
@@ -61,10 +64,11 @@ param diagnosticStorageAccountResourceGroup string = ''
 // Define Variables
 var lockName = '${logAnalyticsWorkspace.name}-lock'
 var diagnosticsName = '${logAnalyticsWorkspace.name}-dgs'
+var name = 'log-${uniqueString(resourceGroup().id, resourceName)}'
 
 // Create a Log Analytics Workspace
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
-  name: name
+  name: length(name) > 63 ? substring(name, 0, 63) : name
   location: location
   properties: {
     sku: {

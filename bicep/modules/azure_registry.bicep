@@ -2,8 +2,10 @@ targetScope = 'resourceGroup'
 
 @minLength(5)
 @maxLength(50)
-@description('Registry Name.')
-param name string = 'acr${uniqueString(resourceGroup().id)}'
+@description('Used to name all resources')
+param resourceName string
+
+
 
 @description('Registry Location.')
 param location string = resourceGroup().location
@@ -37,10 +39,12 @@ param rbacPermissions array = [
   */
 ]
 
+var name = 'acr${replace(resourceName, '-', '')}${uniqueString(resourceGroup().id, resourceName)}'
+
 
 // Create Azure Container Registry
 resource acr 'Microsoft.ContainerRegistry/registries@2019-12-01-preview' = {
-  name: replace('${name}', '-', '')
+  name: length(name) > 50 ? substring(name, 0, 50) : name
   location: location
   tags: tags
   sku: {

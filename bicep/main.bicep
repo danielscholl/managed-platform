@@ -63,7 +63,7 @@ module stgModule 'modules/azure_storage.bicep' = {
 module keyvault 'modules/azure_keyvault.bicep' = {
   name: 'azure_keyvault'
   params: {
-      name: 'kv-${uniqueString(resourceGroup().id)}'
+      resourceName: uniqueString(resourceGroup().id)
       location: location
   }
 }
@@ -90,7 +90,7 @@ module podIdentity 'modules/user_identity.bicep' = {
 module logAnalytics 'modules/azure_log_analytics.bicep' = {
   name: 'log_analytics'
   params: {
-    name: 'log-${uniqueString(resourceGroup().id)}'
+    resourceName: uniqueString(resourceGroup().id)
     location: location
     sku: 'PerGB2018'
     retentionInDays: 30
@@ -137,7 +137,7 @@ module vnet 'modules/azure_vnet.bicep' = if (virtualNetworkNewOrExisting == 'new
 module cluster 'modules/aks_cluster.bicep' = {
   name: 'azure_kubernetes'
   params: {
-    name: 'aks-${uniqueString(resourceGroup().id)}'
+    resourceName: uniqueString(resourceGroup().id)
     location: location
     version: aksVersion
     vmSize: vmSize
@@ -158,7 +158,7 @@ module cluster 'modules/aks_cluster.bicep' = {
 module acr 'modules/azure_registry.bicep' = {
   name: 'container_registry'
   params: {
-    name: 'acr${uniqueString(resourceGroup().id)}'
+    resourceName: uniqueString(resourceGroup().id)
     rbacPermissions: [
       {
         roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/8311e382-0749-4cb8-b61a-304f252e45ec' //Acr Push Role

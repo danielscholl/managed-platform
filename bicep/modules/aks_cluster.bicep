@@ -1,7 +1,9 @@
 targetScope = 'resourceGroup'
 
-@description('Specifies the name of the AKS cluster.')
-param name string = '${resourceGroup().name}-cluster'
+@minLength(1)
+@maxLength(63)
+@description('Used to name all resources')
+param resourceName string
 
 @description('Specify the location of the AKS cluster.')
 param location string = resourceGroup().location
@@ -25,7 +27,7 @@ param workspaceId string
 param identityId string
 
 @description('Specifies the DNS prefix specified when creating the managed cluster.')
-param dnsPrefix string = name
+param dnsPrefix string = 'aks-${resourceGroup().name}'
 
 @description('Specifies the tier of a managed cluster SKU: Paid or Free')
 @allowed([
@@ -149,8 +151,10 @@ var addOn = {
   fluxEnabled: true // Specifies whether the flux add-on is enabled or not.
 }
 
+var name = 'aks-${uniqueString(resourceGroup().id, resourceName)}'
+
 resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
-  name: name
+  name: length(name) > 63 ? substring(name, 0, 63) : name
   location: location
 
   identity: {
