@@ -117,3 +117,39 @@ jobs:
             $params=$paramFileContent|ConvertFrom-Json
             Write-Output $params.parameters.storageAccountType.value
           }
+
+      - name: Parameter Value Augmentation
+        id: params
+        env:
+          DEFAULTRGNAME: managed-platform-cicd
+        run: |
+            if [ -z "${{ github.event.inputs.region }}" ]
+            then
+              echo "Region parameter not available through GitHub event data, setting default"
+              REGION="southcentralus"
+            else
+              echo "Region parameter found in GitHub event (${{ github.event.inputs.region }})"
+              REGION="${{ github.event.inputs.region }}"
+            fi
+            echo $REGION
+            echo "::set-output name=REGION::$REGION"
+            if [ -z "${{ github.event.inputs.ResourceGroup }}" ]
+            then
+              echo "ResourceGroup parameter not available through GitHub event data, setting to default"
+              echo $DEFAULTRGNAME
+              echo "::set-output name=RESOURCEGROUP::$DEFAULTRGNAME"
+            else
+              echo "Resource Group parameter found in GitHub event (${{ github.event.inputs.ResourceGroup }})"
+              echo "::set-output name=RESOURCEGROUP::${{ github.event.inputs.ResourceGroup }}"
+            fi
+            NEWRESNAME="$RESNAME${REGION:0:3}"
+            echo "Setting new Resource Name $NEWRESNAME"
+            echo "::set-output name=NEWRESNAME::$NEWRESNAME"
+
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+          environment: azurecloud
+          allow-no-subscriptions: false
