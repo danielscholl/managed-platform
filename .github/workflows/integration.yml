@@ -181,3 +181,34 @@ jobs:
             #echo 'Verbose deployment list'
             #az deployment group list -g $RG --query "[].[properties.provisioningState, name]"
             echo "::set-output name=RUNCOUNT::$RUNCOUNT" #outputting for condition
+
+      - name: Verify AKS Preview Features are available in target Subscription
+        if: github.event.inputs.doVerifySteps == 'true'
+        shell: pwsh
+        run: |
+          write-output 'Full list of features of AKS'
+          az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService')].{Name:name,State:properties.state}"
+          write-output 'Features that are still registering'
+          az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService') && properties.state=='Registering'].{Name:name,State:properties.state}"
+          write-output 'Checking to ensure no features are still registering'
+          #Not going to use JMES as i'm getting a weird error that i don't see locally in powershell
+          $aksfeatures = az feature list --query "[?contains(name, 'Microsoft.ContainerService')]" | ConvertFrom-Json
+          #$aksfeatures = $allfeatures | Where-Object {$_.Name -like 'Microsoft.ContainerService*'}
+          $registeringfeatures = $aksfeatures |  Where-Object {$_.properties.state -eq 'Registering'}
+          if ($registeringfeatures.count -gt 0) {
+            Write-Error "There are still features registering"
+          } else { Write-Output "-- All good, no features in the process of registering" }
+          write-output 'Check specific features.'
+          $paramFilePath="${{ env.ParamFilePath }}"
+          $paramFileContent=Get-Content $paramFilePath
+          $params=$paramFileContent|ConvertFrom-Json
+          if($params.parameters.keyVaultAksCSI.value -eq $true) {
+            $feature='AKS-AzureKeyVaultSecretsProvider'
+            write-output "-- $feature"
+            $featureCsi = $aksfeatures |  Where-Object {$_.name -like "*$feature"}
+            $featureCsi.properties.state
+            if ($featureCsi.properties.state -ne 'Registered') {
+              Write-Output $featureCsi
+              Write-Error "$feature NOT registered"
+            } else { Write-Output "-- Looks like $feature is registered properly" }
+          }
