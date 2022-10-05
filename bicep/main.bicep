@@ -131,13 +131,7 @@ module vnet 'modules/azure_vnet.bicep' = if (virtualNetworkNewOrExisting == 'new
   ]
 }
 
-// Create Container Registry
-module acr 'modules/azure_registry.bicep' = {
-  name: 'container_registry'
-  params: {
-    name: 'acr${uniqueString(resourceGroup().id)}'
-  }
-}
+
 
 // Create AKS Cluster
 module cluster 'modules/aks_cluster.bicep' = {
@@ -157,6 +151,26 @@ module cluster 'modules/aks_cluster.bicep' = {
     clusterIdentity
     logAnalytics
     vnet
+  ]
+}
+
+// Create Container Registry
+module acr 'modules/azure_registry.bicep' = {
+  name: 'container_registry'
+  params: {
+    name: 'acr${uniqueString(resourceGroup().id)}'
+    rbacPermissions: [
+      {
+        roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/8311e382-0749-4cb8-b61a-304f252e45ec' //Acr Push Role
+        principalId: clusterIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        enabled: true
+      }
+    ]
+  }
+  dependsOn: [
+    clusterIdentity
+    cluster
   ]
 }
 

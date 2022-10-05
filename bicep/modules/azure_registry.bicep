@@ -25,6 +25,18 @@ param acrAdminUserEnabled bool = false
 ])
 param acrSku string = 'Premium'
 
+@description('Array of objects that describe RBAC permissions, format { roleDefinitionResourceId (string), principalId (string), principalType (enum), enabled (bool) }. Ref: https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/roleassignments?tabs=bicep')
+param rbacPermissions array = [
+  /* example
+      {
+        roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/8311e382-0749-4cb8-b61a-304f252e45ec' // AcrPush
+        principalId: '00000000-0000-0000-0000-000000000000' // az ad signed-in-user show --query objectId --output tsv
+        principalType: 'User'
+        enabled: false
+      }
+  */
+]
+
 
 // Create Azure Container Registry
 resource acr 'Microsoft.ContainerRegistry/registries@2019-12-01-preview' = {
@@ -49,7 +61,16 @@ resource lock 'Microsoft.Authorization/locks@2016-09-01' = if (enableDeleteLock)
   }
 }
 
-
+// Add role assignments
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for item in rbacPermissions: if (item.enabled) {
+  name: guid(acr.id, item.principalId, item.roleDefinitionResourceId)
+  scope: acr
+  properties: {
+    roleDefinitionId: item.roleDefinitionResourceId
+    principalId: item.principalId
+    principalType: item.principalType
+  }
+}]
 
 ////////////////
 // Private Link
