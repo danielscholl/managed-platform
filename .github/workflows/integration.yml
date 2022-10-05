@@ -102,7 +102,7 @@ jobs:
           echo "AZCLIVERSION is ${{ env.AZCLIVERSION }}"
           echo "doDebugSteps is ${{ github.event.inputs.doDebugSteps }}"
           echo "doVerifySteps is ${{ github.event.inputs.doVerifySteps }}"
-          
+
       - name: Arm Parameter file check
         if: github.event.inputs.doVerifySteps == 'true'
         shell: pwsh
@@ -113,7 +113,7 @@ jobs:
           if (Test-Path $paramFilePath) {
             $paramFileContent=Get-Content $paramFilePath
             Write-Output $paramFileContent
-            Write-Output "Test Pulling a param (ingressApplicationGateway)"
+            Write-Output "Test Pulling a param (storageAccountType)"
             $params=$paramFileContent|ConvertFrom-Json
-            Write-Output $params.parameters.ingressApplicationGateway.value
+            Write-Output $params.parameters.storageAccountType.value
           }
