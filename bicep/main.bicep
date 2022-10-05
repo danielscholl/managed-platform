@@ -63,7 +63,7 @@ module stgModule 'modules/azure_storage.bicep' = {
 module keyvault 'modules/azure_keyvault.bicep' = {
   name: 'azure_keyvault'
   params: {
-      name: 'kv${uniqueString(resourceGroup().id)}'
+      name: 'kv-${uniqueString(resourceGroup().id)}'
       location: location
   }
 }
