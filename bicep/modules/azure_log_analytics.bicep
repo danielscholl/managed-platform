@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 @description('Name of the workspace')
-param name string = 'la${resourceGroup().name}'
+param name string = 'log-${resourceGroup().name}'
 
 @description('Workspace Location.')
 param location string = resourceGroup().location
