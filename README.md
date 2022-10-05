@@ -21,3 +21,5 @@
 [Blog Part 1](https://arsenvlad.medium.com/simple-azure-managed-application-creating-testing-and-publishing-in-partner-center-d2cb3b98bed2)
 
 [Blog Part 2](https://arsenvlad.medium.com/azure-managed-application-with-aks-and-deployment-time-or-cross-tenant-role-assignments-to-vm-and-3ebce7d607c2)
+
+[AKS Baseline Architecture](https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/containers/aks/baseline-aks?toc=https%3A%2F%2Flearn.microsoft.com%2Fen-us%2Fazure%2Faks%2Ftoc.json&bc=https%3A%2F%2Flearn.microsoft.com%2Fen-us%2Fazure%2Fbread%2Ftoc.json)
