@@ -1,0 +1,66 @@
+name: Integration Testing
+
+
+on:
+  push:
+    paths:
+      - ".github/workflows_dep/parameters.json"
+      - "bicep/*"
+
+  #Running on a schedule helps trap issues like Kubernetes versions not being available in the region, or Well Architected recommendations changing
+  schedule:
+    # At 11:00pm, every Wednesday week
+    - cron: "0 23 * * 3"
+
+  workflow_dispatch:
+    inputs:
+      ResourceGroup:
+        description: 'Which Resource Group to deploy to'
+        default: 'managed-platform-ci'
+        type: string
+        required: false
+      region:
+        description: 'Region (needs to be same as byo vnet location)'
+        default: 'southcentralus'
+        type: text
+        required: false
+      doWellArchitected:
+        description: 'Perform the Well Architected Framework assesment'
+        default: false
+        type: boolean
+        required: false
+
+
+
+concurrency: ci-${{ github.ref }}
+
+env:
+  AZCLIVERSION: 2.40.0 #latest
+  ParamFilePath: ".github/workflows_dep/parameters.json"
+
+
+jobs:
+  Well_Architected:
+    runs-on: ubuntu-latest
+    if:  github.event_name == 'pull_request' || github.event.inputs.doWellArchitected == 'true'
+    steps:
+      - uses: actions/checkout@v2
+
+      # PSRule does this cool thing where it traverse the parameter file through to the arm template
+      # PSRule performs IaC recommendations of the template.
+      # https://azure.github.io/PSRule.Rules.Azure/
+      - name: PSRule for Azure - Well Architected
+        uses: Microsoft/ps-rule@main
+        continue-on-error: true #Setting this whilst PSRule gets bedded in, in this project
+        with:
+          modules: 'PSRule.Rules.Azure'
+          inputPath: "${{ env.ParamFilePath }}"
+
+      # In addition to the Well Architected analysis, we can also leverage the CAF rules
+      # Run analysis against PSRule for Cloud Adoption Framework
+      - name: PSRule for CAF
+        uses: microsoft/ps-rule@v2.0.0
+        continue-on-error: true #Setting this whilst PSRule gets bedded in, in this project
+        with:
+          modules: 'PSRule.Rules.CAF'
+          inputPath: "${{ env.ParamFilePath }}"
