@@ -6,7 +6,7 @@
   },
   "parameters": {
     "storageAccountType": {
-      "value": "Standard_LRS"
+      "value": "Standard_GRS"
     }
   }
 }

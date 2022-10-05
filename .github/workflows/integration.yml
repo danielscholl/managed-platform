@@ -4,8 +4,15 @@ name: Integration Testing
 on:
   push:
     paths:
-      - ".github/workflows_dep/parameters.json"
       - "bicep/**/*"
+      - ".github/workflows_dep/parameters.json"
+
+  pull_request:
+    branches: [main]
+    paths:
+      - "bicep/**/*"
+      - ".github/workflows_dep/parameters.json"
+
 
   #Running on a schedule helps trap issues like Kubernetes versions not being available in the region, or Well Architected recommendations changing
   schedule:
@@ -29,7 +36,16 @@ on:
         default: false
         type: boolean
         required: false
-
+      doDebugSteps:
+        description: 'Run informational steps'
+        default: true
+        type: boolean
+        required: false
+      doVerifySteps:
+        description: 'Run optional verify steps'
+        default: true
+        type: boolean
+        required: false
 
 
 concurrency: ci-${{ github.ref }}
@@ -37,6 +53,8 @@ concurrency: ci-${{ github.ref }}
 env:
   AZCLIVERSION: 2.40.0 #latest
   ParamFilePath: ".github/workflows_dep/parameters.json"
+  RESNAME: "mgplt"
+  DEPNAME: "Dep${{ github.run_number }}"
 
 
 jobs:
@@ -56,11 +74,46 @@ jobs:
           modules: 'PSRule.Rules.Azure'
           inputPath: "${{ env.ParamFilePath }}"
 
-      # # In addition to the Well Architected analysis, we can also leverage the CAF rules
-      # # Run analysis against PSRule for Cloud Adoption Framework
-      # - name: PSRule for CAF
-      #   uses: microsoft/ps-rule@v2.0.0
-      #   continue-on-error: true #Setting this whilst PSRule gets bedded in, in this project
-      #   with:
-      #     modules: 'PSRule.Rules.CAF'
-      #     inputPath: "${{ env.ParamFilePath }}"
+
+#Pre deployment validation of the parameters + bicep code
+  Validation:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    outputs:
+      RESOURCEGROUP:  ${{ steps.params.outputs.RESOURCEGROUP}}
+      REGION: ${{ steps.params.outputs.REGION}}
+      RESNAME: ${{ steps.params.outputs.NEWRESNAME}}
+      
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Job parameter check
+        if: github.event.inputs.doDebugSteps == 'true'
+        run: |
+          echo "Param file path is: ${{ env.ParamFilePath }}"
+          echo "Resource name is ${{ env.RESNAME }}"
+          echo "Deployment name is ${{ env.DEPNAME }}"
+          echo "Ref is ${{ github.ref }}"
+          echo "Ref name is ${{GITHUB.REF_NAME}}"
+          echo "EventTrigger name is ${{github.event_name}}"
+          echo "PR contains bug :  ${{contains(github.event.pull_request.labels.*.name, 'bug')}}"
+          echo "PR labels :  ${{github.event.pull_request.labels.*.name}}"
+          echo "AZCLIVERSION is ${{ env.AZCLIVERSION }}"
+          echo "doDebugSteps is ${{ github.event.inputs.doDebugSteps }}"
+          echo "doVerifySteps is ${{ github.event.inputs.doVerifySteps }}"
+          
+      - name: Arm Parameter file check
+        if: github.event.inputs.doVerifySteps == 'true'
+        shell: pwsh
+        run: |
+          Write-Output "Checking parameter file existence/contents"
+          $paramFilePath="${{ env.ParamFilePath }}"
+          Test-Path $paramFilePath
+          if (Test-Path $paramFilePath) {
+            $paramFileContent=Get-Content $paramFilePath
+            Write-Output $paramFileContent
+            Write-Output "Test Pulling a param (ingressApplicationGateway)"
+            $params=$paramFileContent|ConvertFrom-Json
+            Write-Output $params.parameters.ingressApplicationGateway.value
+          }
