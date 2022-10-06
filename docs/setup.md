@@ -1,6 +1,6 @@
 # Setup
 
-Pipeline Information can be found in the [docs](docs/pipelines.md) folder.
+Pipeline Information can be found [here](pipelines.md).
 
 ## Configure GitHub Secrets
 
