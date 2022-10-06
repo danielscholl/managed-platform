@@ -276,9 +276,49 @@ jobs:
     needs: [Validation]
     environment: ${{ github.event.inputs.environment }}
     env:
-      RG: ${{ needs.Validation.outputs.RESOURCEGROUP }}
+      RESOURCE_GROUP: ${{ needs.Validation.outputs.RESOURCEGROUP }}
       REGION: ${{ needs.Validation.outputs.REGION }}
 
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/develop'
     steps:
       - uses: actions/checkout@v2
+        
+      - name: Job parameter check
+        if: github.event.inputs.doDebugSteps == 'true'
+        run: |
+          echo "RESOURCE_GROUP is: ${{ env.RESOURCE_GROUP }}"
+          echo "Param file path is: ${{ env.ParamFilePath }}"
+          echo "Deployment name is ${{ env.DEPNAME }}
+
+      - name: Parameter file dependency check
+        if: github.event.inputs.doVerifySteps == 'true'
+        shell: pwsh
+        run: |
+          Write-Output "Checking parameter file existence/contents"
+          $paramFilePath="${{ env.ParamFilePath }}"
+          Test-Path $paramFilePath
+          if (Test-Path $paramFilePath) {
+            $paramFileContent=Get-Content $paramFilePath
+            Write-Output $paramFileContent
+          }
+
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+          environment: azurecloud
+          allow-no-subscriptions: false
+
+      - name: Deploy Infrastructure
+        id: deployAks
+        uses: Azure/cli@1.0.4
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            DEPNAME='Dep${{ github.run_number }}'
+            PARAMS="location=$REGION"
+            az deployment group create -f bicep/main.bicep -g $RESOURCE_GROUP -p ${{ env.ParamFilePath }} -p $PARAMS --name $DEPNAME --verbose
+            az deployment operation group list --resource-group $RESOURCE_GROUP --name $DEPNAME)
