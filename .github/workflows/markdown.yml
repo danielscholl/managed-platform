@@ -1,6 +1,6 @@
 on: [pull_request, workflow_dispatch]
 
-name: Check Markdown
+name: Documentation
 jobs:
   Validation:
     runs-on: ubuntu-latest

@@ -88,7 +88,7 @@ For this project we're using the Azure Vote application, which is the de-facto a
 
 ## Other actions used in this repo
 
-### Check Markdown
+### Documentation
 
 This is a super simple action that runs a *spell check* on any `.md` files in the repo. It's useful to catch simple mistakes from quick edits or other peoples PR's. This action is also part of the branch policy for merging to main.
 
@@ -97,28 +97,28 @@ This is a super simple action that runs a *spell check* on any `.md` files in th
 
 The CI Actions leveraged have a certain amount of commonality, they primarily vary by the parameter configuration of the resources they are deploying. As an example, the CI Actions that deploy an Application Gateway Ingress Controller deploy a specific workload onto AKS and then check that the Gateway is directing traffic properly.
 
-### Validation stage
+### Validate stage
 
-As detailed above, the validation stage is essential in creating a baseline of quality.
+As detailed above, the validate stage is essential in creating a baseline of quality.
 
-### Deployment stage
+### Deploy stage
 
 This stage captures all of the deployment and post deployment configuration activities and actually deploys the resources to an Azure subscription.
 
 There are often configuration tasks that need to be done after AKS is installed, such as the [Log Analytics Fast Alerting Experience](https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-enable-new-cluster) being enabled or a different ingress controller installed from a shell script.
 
 
-### Infrastructure tests
+### Test stage
 
 This stage provides the opportunity for configuration to be checked. An example from the Private CI action is ensuring that the Cluster is able to provide logs to Log Analytics, which can trip up deployments where you bring your own networking and firewall.
 
-### Workload Add
+### Workload stage
 
 A great smoke test of fresh infrastructure is deploying a known good static application. This is especially true when using Ingress controllers that require specific configuration.
 
 The Private CI action deploys both a public facing and private facing workload onto AKS using the [Application Gateway Ingress Controller](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-overview). After adding the workload, a basic integration test is performed by sending an http request to the frontend ip address on the Application Gateway and checking for the http response code being 200.
 
-### Cleanup
+### Cleanup stage
 
 This stage will delete the resources created in Azure, after proving the configuration. If one of the previous stages fails then the infrastructure will be left in order to enable troubleshooting.
 
