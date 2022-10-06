@@ -86,7 +86,6 @@ jobs:
     outputs:
       RESOURCEGROUP:  ${{ steps.params.outputs.RESOURCEGROUP}}
       REGION: ${{ steps.params.outputs.REGION}}
-      RESNAME: ${{ steps.params.outputs.NEWRESNAME}}
       
     steps:
       - uses: actions/checkout@v2
@@ -145,9 +144,6 @@ jobs:
               echo "Resource Group parameter found in GitHub event (${{ github.event.inputs.ResourceGroup }})"
               echo "::set-output name=RESOURCEGROUP::${{ github.event.inputs.ResourceGroup }}"
             fi
-            NEWRESNAME="$RESNAME${REGION:0:3}"
-            echo "Setting new Resource Name $NEWRESNAME"
-            echo "::set-output name=NEWRESNAME::$NEWRESNAME"
 
       - name: Azure Login
         uses: Azure/login@v1
@@ -180,8 +176,6 @@ jobs:
             echo "Active deployments : $RUNCOUNT"
             echo 'Active deployment list'
             az deployment group list -g $RG --query "[?properties.provisioningState=='Running'].[properties.provisioningState, name]"
-            #echo 'Verbose deployment list'
-            #az deployment group list -g $RG --query "[].[properties.provisioningState, name]"
             echo "::set-output name=RUNCOUNT::$RUNCOUNT" #outputting for condition
 
       - name: Verify AKS Preview Features are available in target Subscription
@@ -214,3 +208,29 @@ jobs:
               Write-Error "$feature NOT registered"
             } else { Write-Output "-- Looks like $feature is registered properly" }
           }
+
+
+      - name: Create Parameter file imperative override string
+        uses: Azure/cli@1.0.4
+        id: imperitiveparams
+        env:
+          RG: ${{ steps.params.outputs.RESOURCEGROUP }}
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            PARAMOVERRIDES="location=${{ steps.params.outputs.REGION}}"
+            echo $PARAMOVERRIDES
+            echo "::set-output name=PARAMOVERRIDES::$PARAMOVERRIDES"
+
+      - name: Validate Infrastructure deployment
+        uses: Azure/cli@1.0.4
+        env:
+          RG: ${{ steps.params.outputs.RESOURCEGROUP }}
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            RESNAME='${{ env.RESNAME }}'
+            DEPNAME='Dep${{ github.run_number }}'
+            PARAMS='${{ steps.imperitiveparams.outputs.PARAMOVERRIDES}}'
+            echo $PARAMS
+            az deployment group validate -f bicep/main.bicep -g $RG -p ${{ env.ParamFilePath }} -p $PARAMS --verbose
