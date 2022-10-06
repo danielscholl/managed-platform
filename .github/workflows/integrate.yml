@@ -251,3 +251,34 @@ jobs:
             fi
             cat $WHATIFPATH
             echo "::set-output name=edgeSuccess::true"
+
+      - name: What If Analysis Output - Parse output
+        if: github.event.inputs.doVerifySteps == 'true'
+        shell: pwsh
+        run: |
+          $whatifpath='whatif.json'
+          Write-Output "Checking for JSON What-If"
+          $whatifexists=Test-Path -path $whatifpath
+          Write-Output $whatifexists
+          if ($whatifexists) {
+            $jsonFileRaw=Get-Content $whatifpath
+            Write-Output $jsonFileRaw
+            $whatIf=$jsonFileRaw | ConvertFrom-Json
+            if ($null -eq $whatIf) {
+              Write-Output "What If results are null"
+            } else {
+              Write-Output $whatif.changes[0].after.type
+            }
+          }
+
+  Deploy:
+    runs-on: ubuntu-latest
+    needs: [Validation]
+    environment: ${{ github.event.inputs.environment }}
+    env:
+      RG: ${{ needs.Validation.outputs.RESOURCEGROUP }}
+      REGION: ${{ needs.Validation.outputs.REGION }}
+
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/develop')
+    steps:
+      - uses: actions/checkout@v2
