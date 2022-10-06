@@ -17,7 +17,6 @@ on:
       - ".github/workflows_dep/parameters.json"
 
 
-  #Running on a schedule helps trap issues like Kubernetes versions not being available in the region, or Well Architected recommendations changing
   schedule:
     # At 11:00pm, every Wednesday week
     - cron: "0 23 * * 3"
@@ -59,9 +58,9 @@ env:
   RESNAME: "mgplt"
   DEPNAME: "Dep${{ github.run_number }}"
 
-
 jobs:
-  Well_Architected:
+  
+  Standards:
     runs-on: ubuntu-latest
     if:  github.event_name == 'pull_request' || github.event.inputs.doWellArchitected == 'true'
     steps:
@@ -77,9 +76,8 @@ jobs:
           modules: 'PSRule.Rules.Azure'
           inputPath: "${{ env.ParamFilePath }}"
 
-
-#Pre deployment validation of the parameters + bicep code
-  Validation:
+  Validate:
+    name: Validate
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -272,12 +270,13 @@ jobs:
           }
 
   Deploy:
+    name: Deploy
     runs-on: ubuntu-latest
-    needs: [Validation]
+    needs: [Validate]
     environment: ${{ github.event.inputs.environment }}
     env:
-      RESOURCE_GROUP: ${{ needs.Validation.outputs.RESOURCEGROUP }}
-      REGION: ${{ needs.Validation.outputs.REGION }}
+      RESOURCE_GROUP: ${{ needs.Validate.outputs.RESOURCEGROUP }}
+      REGION: ${{ needs.Validate.outputs.REGION }}
 
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/develop'
     steps:
@@ -328,15 +327,15 @@ jobs:
             az deployment operation group list --resource-group $RESOURCE_GROUP --name $DEPNAME)
 
             #outputs
-            AKS_NAME=$(az deployment group show -n $DEPNAME -g $RESOURCE_GROUP --query "properties.outputs.AKS_NAME.value" -o tsv)
+            AKS_NAME=$(az deployment group show -n $DEPNAME -g $RESOURCE_GROUP --query "properties.outputs.aksName.value" -o tsv)
             echo "::set-output name=AKS_NAME::$AKS_NAME"
 
-
-  DeployVerify:
+  Verify:
+    name: Verify
     runs-on: ubuntu-latest
-    needs: [Validation, Deploy]
+    needs: [Validate, Deploy]
     env:
-      RESOURCE_GROUP: ${{ needs.Validation.outputs.RESOURCEGROUP }}
+      RESOURCE_GROUP: ${{ needs.Validate.outputs.RESOURCEGROUP }}
     steps:
       - uses: actions/checkout@v2
 

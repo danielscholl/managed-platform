@@ -11,17 +11,17 @@ Often the term "Infrastructure as Code" is misinterpreted as representing your i
 #### Branch policies
 
 It's important to protect your main branch by enforcing Pull Requests to be used with an additional reviewer.
-As part of the PR you can set various Actions to run, and crucially you can specify jobs in the pipelines that must always pass. For this repo, we're using `Validation` as the name of the job that must always pass [status checks](https://docs.github.com/v3/repos/statuses/).
+As part of the PR you can set various Actions to run, and crucially you can specify jobs in the pipelines that must always pass. For this repo, we're using `Validate` as the name of the job that must always pass [status checks](https://docs.github.com/v3/repos/statuses/).
 
 
 ### The workflow
 
 Behind any IaC you write, you'll want to have some automation to assure quality. There is a compromise to be had when it comes to the amount of time and activities to include in the automation workflow. It's important to shift left as much as you can, to take advantage of quick wins to feedback to the engineer that's contributing the IaC. It's also important to consider the consumers of your IaC code;
 
-- How are they going to be provided the IaC
-- Do they know how to run it
-- How does the deployment  behaviour change as the parameters vary
-- How can they incorporate a new version of the template as you improve it
+- How are they going to be provided the IaC?
+- Do they know how to run it?
+- How does the deployment  behaviour change as the parameters vary?
+- How can they incorporate a new version of the template as you improve it?
 
 
 ### Pre-deploy Validation
@@ -29,11 +29,11 @@ Behind any IaC you write, you'll want to have some automation to assure quality.
 It's essential to shift left, and catch as many problems before a single resource is deployed to real infrastructure. There are a plethora of tools and techniques that can be leveraged to catch functional or syntactical problems depending on your authoring language and platform.
 
 
-#### Bicep Build
+#### Build
 
-Whenever code files in the bicep directory are changed on a push, the bicep build command is run. This action installs bicep and runs the `bicep build` command, if this fails then this is a very early indicator to the author that the bicep file is not valid. Ideally these problems would have surfaced earlier in the coding inner loop, but sometimes mistakes can happen and bad files can make it back into source control.
+Whenever code files in the bicep directory are changed on a push, the build command is run. This action installs bicep and runs the `bicep build` command, if this fails then this is a very early indicator to the author that the bicep file is not valid. Ideally these problems would have surfaced earlier in the coding inner loop, but sometimes mistakes can happen and bad files can make it back into source control.
 
-Running a bicep build initiates the [linter](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/linter), which will create warnings where best practices are not followed. Any errors that are encountered will fail the pipeline.
+Running a build initiates the [linter](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/linter), which will create warnings where best practices are not followed. Any errors that are encountered will fail the pipeline.
 
 Warnings do not form part of the pass/fail of the action step, however you can use [linter configuration](https://docs.microsoft.com/azure/azure-resource-manager/bicep/bicep-config-linter) to achieve this.
 
@@ -47,7 +47,7 @@ An interesting project for performing pre/post validation of Azure Resources aga
 
 As a minimum bar to assert the quality of the bicep code we really want to leverage some additional validation of "would this deploy successfully" and "what will this create", but without actually creating any actual Infrastructure resources.
 
-To do this we need to talk to the Azure Control Plane, so we'll need a set of Azure Credentials, Subscription and a resource group with RBAC configured.
+To do this we need to talk to the Azure Control Plane, so we'll need an Azure Application with Federated OIDC, an Azure Subscription with RBAC for the Azure Application configured and a resource group.
 
 1. [Validation](https://docs.microsoft.com/en-us/cli/azure/deployment/group?view=azure-cli-latest#az_deployment_group_validate). Validation ensures the template compiles, that there are no errors in the bicep code, that the parameter file provides all mandatory parameters and that the ARM Control plane will accept the deployment. A great example of what Validate can do is that it will fail if you supply incompatible configuration through parameters, eg. You want a feature of an Azure service that comes with a Premium SKU but you've set the SKU to Standard.
 

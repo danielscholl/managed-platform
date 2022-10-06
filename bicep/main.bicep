@@ -172,4 +172,4 @@ module acr 'modules/azure_registry.bicep' = {
   ]
 }
 
-output AKS_NAME string = cluster.outputs.name
+output aksName string = cluster.outputs.name
