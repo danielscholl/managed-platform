@@ -1,5 +1,8 @@
 name: Integration Testing
 
+permissions:
+  id-token: write
+  contents: read
 
 on:
   push:
