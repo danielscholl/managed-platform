@@ -38,7 +38,7 @@ Guide | Description
 [Generic Contribution Guide](CONTRIBUTING.md) | Talks about the branching strategy, using CodeSpaces and general guidance
 
 
-## Helpful Links on working with Azure Managed Applications
+## Helpful Learning Links
 
 - [UI Sandbox](https://portal.azure.com/?feature.customPortal=false&#blade/Microsoft_Azure_CreateUIDef/SandboxBlade)
 - [UI Definition Documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/managed-applications/create-uidefinition-overview)
