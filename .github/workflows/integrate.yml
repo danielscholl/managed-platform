@@ -316,13 +316,67 @@ jobs:
           environment: azurecloud
           allow-no-subscriptions: false
 
-      # - name: Deploy Infrastructure
-      #   id: deployAks
-      #   uses: Azure/cli@1.0.4
-      #   with:
-      #     azcliversion: ${{ env.AZCLIVERSION }}
-      #     inlineScript: |
-      #       DEPNAME='Dep${{ github.run_number }}'
-      #       PARAMS="location=$REGION"
-      #       az deployment group create -f bicep/main.bicep -g $RESOURCE_GROUP -p ${{ env.ParamFilePath }} -p $PARAMS --name $DEPNAME --verbose
-      #       az deployment operation group list --resource-group $RESOURCE_GROUP --name $DEPNAME)
+      - name: Deploy Infrastructure
+        id: deployAks
+        uses: Azure/cli@1.0.4
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            DEPNAME='Dep${{ github.run_number }}'
+            PARAMS="location=$REGION"
+            az deployment group create -f bicep/main.bicep -g $RESOURCE_GROUP -p ${{ env.ParamFilePath }} -p $PARAMS --name $DEPNAME --verbose
+            az deployment operation group list --resource-group $RESOURCE_GROUP --name $DEPNAME)
+
+            #outputs
+            AKS_NAME=$(az deployment group show -n $DEPNAME -g $RESOURCE_GROUP --query "properties.outputs.AKS_NAME.value" -o tsv)
+            echo "::set-output name=AKS_NAME::$AKS_NAME"
+
+
+  DeployVerify:
+    runs-on: ubuntu-latest
+    needs: [Validation, Deploy]
+    env:
+      RESOURCE_GROUP: ${{ needs.Validation.outputs.RESOURCEGROUP }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Param check
+        if: github.event.inputs.doDebugSteps == 'true'
+        run: |
+          echo "RESOURCE_GROUP is $RESOURCE_GROUP"
+          echo "Param file path is: ${{ env.ParamFilePath }}"
+          echo "Deployment name is ${{ env.DEPNAME }}"
+          echo "AKS name is ${{ needs.Deploy.outputs.AKS_NAME }}"
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+          environment: azurecloud
+          allow-no-subscriptions: false
+
+      - name: Test Deployment
+        shell: pwsh
+        run: |
+          $RESOURCE_GROUP='${{ env.RESOURCE_GROUP }}'
+          $AKS_NAME='${{ needs.Deploy.outputs.AKS_NAME }}'
+          $paramFilePath="${{ env.ParamFilePath }}"
+          $params = Get-Content $paramFilePath | ConvertFrom-Json
+          Write-Output "Checking for User Assigned Identity"
+          if($params.parameters.custom_vnet.value -eq $true) {
+            $aksId=az aks show -n $AKS_NAME -g $RESOURCE_GROUP --query "identity.type" -o tsv
+            write-output $aksId
+            if($aksId -eq "UserAssigned"){
+              Write-Output "UAI set correctly"
+            } else {
+              Write-Error "UAI not set properly"}
+          }
+          Write-Output "Checking for CSI Secrets driver"
+          if($params.parameters.keyVaultAksCSI.value -eq $true) {
+            $csiEnabled=az aks show -n $AKS_NAME -g $RESOURCE_GROUP --query "addonProfiles.omsagent.enabled" -o tsv
+            write-output $csiEnabled
+            if($csiEnabled -eq "true"){
+              Write-Output "CSI Secrets driver set correctly"
+            } else {
+              Write-Error "CSI Secrets driver not set properly"}
+          }

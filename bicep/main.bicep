@@ -174,4 +174,4 @@ module acr 'modules/azure_registry.bicep' = {
   ]
 }
 
-output storagePrivateLink bool = storagePrivateLink
+output AKS_NAME string = cluster.outputs.name

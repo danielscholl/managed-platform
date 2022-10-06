@@ -297,3 +297,5 @@ resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-prev
   }
   dependsOn: [aks]
 }
+
+output name string = aks.name
