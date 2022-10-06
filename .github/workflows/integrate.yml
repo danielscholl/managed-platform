@@ -33,14 +33,14 @@ on:
         default: 'southcentralus'
         type: text
         required: false
-      doWellArchitected:
+      doStandards:
         description: 'Perform the Well Architected Framework assesment'
         default: false
         type: boolean
         required: false
       doDebugSteps:
         description: 'Run informational steps'
-        default: true
+        default: false
         type: boolean
         required: false
       doVerifySteps:
@@ -55,14 +55,13 @@ concurrency: ci-${{ github.ref }}
 env:
   AZCLIVERSION: 2.40.0 #latest
   ParamFilePath: ".github/workflows_dep/parameters.json"
-  RESNAME: "mgplt"
   DEPNAME: "Dep${{ github.run_number }}"
 
 jobs:
   
   Standards:
     runs-on: ubuntu-latest
-    if:  github.event_name == 'pull_request' || github.event.inputs.doWellArchitected == 'true'
+    if:  github.event_name == 'pull_request' || github.event.inputs.doStandards == 'true'
     steps:
       - uses: actions/checkout@v2
 
@@ -77,7 +76,6 @@ jobs:
           inputPath: "${{ env.ParamFilePath }}"
 
   Validate:
-    name: Validate
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     if: ${{ !github.event.pull_request.head.repo.fork }}
