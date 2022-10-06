@@ -290,7 +290,7 @@ jobs:
           echo "Param file path is: ${{ env.ParamFilePath }}"
           echo "Deployment name is ${{ env.DEPNAME }}
 
-      - name: Parameter file dependency check
+      - name: Parameter file check
         if: github.event.inputs.doVerifySteps == 'true'
         shell: pwsh
         run: |
@@ -300,7 +300,11 @@ jobs:
           if (Test-Path $paramFilePath) {
             $paramFileContent=Get-Content $paramFilePath
             Write-Output $paramFileContent
+            Write-Output "Test Pulling a param (storageAccountType)"
+            $params=$paramFileContent|ConvertFrom-Json
+            Write-Output $params.parameters.storageAccountType.value
           }
+
 
       - name: Azure Login
         uses: Azure/login@v1
@@ -312,13 +316,13 @@ jobs:
           environment: azurecloud
           allow-no-subscriptions: false
 
-      - name: Deploy Infrastructure
-        id: deployAks
-        uses: Azure/cli@1.0.4
-        with:
-          azcliversion: ${{ env.AZCLIVERSION }}
-          inlineScript: |
-            DEPNAME='Dep${{ github.run_number }}'
-            PARAMS="location=$REGION"
-            az deployment group create -f bicep/main.bicep -g $RESOURCE_GROUP -p ${{ env.ParamFilePath }} -p $PARAMS --name $DEPNAME --verbose
-            az deployment operation group list --resource-group $RESOURCE_GROUP --name $DEPNAME)
+      # - name: Deploy Infrastructure
+      #   id: deployAks
+      #   uses: Azure/cli@1.0.4
+      #   with:
+      #     azcliversion: ${{ env.AZCLIVERSION }}
+      #     inlineScript: |
+      #       DEPNAME='Dep${{ github.run_number }}'
+      #       PARAMS="location=$REGION"
+      #       az deployment group create -f bicep/main.bicep -g $RESOURCE_GROUP -p ${{ env.ParamFilePath }} -p $PARAMS --name $DEPNAME --verbose
+      #       az deployment operation group list --resource-group $RESOURCE_GROUP --name $DEPNAME)
