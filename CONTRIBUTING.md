@@ -74,4 +74,4 @@ Releases are used to capture a tested release (all stages, not just Validation),
 
 ### Dev Container / Codespaces
 
-A dev container is present in the repo which makes dev and testing of the UI Helper component much easier.
+A dev container is present in the repo which makes dev and testing bicep and platform simplier.
