@@ -2,7 +2,7 @@ on: [pull_request, workflow_dispatch]
 
 name: Documentation
 jobs:
-  Validation:
+  SpellCheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
