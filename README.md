@@ -17,6 +17,8 @@ This project attempts to leverage guidance from the following sources:
 - [Enterprise-Scale](https://github.com/Azure/Enterprise-Scale) 
 
 
+Further information on this project can be found in the [docs](docs/setup.md) folder.
+
 ## Project Principals
 
 The guiding principal we have with this project is to focus on the the *downstream use* of the project (see [releases](https://github.com/danielscholl/managed-platform/releases))  The goal is to work on infrastructure and a managed platform in a manner that other components can consume the platform or infrastructure deployment. As such, these are our specific practices.
