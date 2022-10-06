@@ -232,3 +232,24 @@ jobs:
             PARAMS='${{ steps.imperitiveparams.outputs.PARAMOVERRIDES}}'
             echo $PARAMS
             az deployment group validate -f bicep/main.bicep -g $RG -p ${{ env.ParamFilePath }} -p $PARAMS --verbose
+
+      - name: What If 
+        uses: Azure/cli@1.0.4
+        id: whatif
+        env:
+          RG: ${{ steps.params.outputs.RESOURCEGROUP }}
+        continue-on-error: true #Setting to true due to bug in the AzureCLI https://github.com/Azure/azure-cli/issues/19850
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }} #latest
+          inlineScript: |
+            RESNAME='${{ env.RESNAME }}'
+            DEPNAME='${{ env.DEPNAME }}'
+            WHATIFPATH='whatif.json'
+            PARAMS='${{ steps.imperitiveparams.outputs.PARAMOVERRIDES}}'
+            az deployment group what-if --no-pretty-print -f bicep/main.bicep -g $RG -p ${{ env.ParamFilePath }} -p $PARAMS > $WHATIFPATH
+            if [[ -f $WHATIFPATH ]]
+            then
+                echo "The WhatIf json file was created"
+            fi
+            cat $WHATIFPATH
+            echo "::set-output name=edgeSuccess::true"
