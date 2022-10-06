@@ -102,26 +102,6 @@
               ]
             },
             "count": 1
-          },
-          {
-            "name": "specifyPrivateLink",
-            "type": "Microsoft.Common.OptionsGroup",
-            "label": "Specify if Private",
-            "toolTip": "Select 'Yes' if you would like to enable private IP Link.",
-            "visible": true,
-            "defaultValue": "No",
-            "constraints": {
-              "allowedValues": [
-                {
-                  "label": "No",
-                  "value": false
-                },
-                {
-                  "label": "Yes",
-                  "value": true
-                }
-              ]
-            }
           }
         ]
       },
@@ -220,8 +200,7 @@
       "podSubnetName": "[steps('networkingConfigBlade').vnet.subnets.podsubnet.name]",
       "podSubnetAddressPrefix": "[steps('networkingConfigBlade').vnet.subnets.podsubnet.addressPrefix]", 
       "storageAccountType": "[steps('storageConfigBlade').storageAccount.type]",
-      "storageAccountPrefix": "[steps('storageConfigBlade').storageAccount.prefix]",
-      "storagePrivateLink": "[steps('storageConfigBlade').specifyPrivateLink]"
+      "storageAccountPrefix": "[steps('storageConfigBlade').storageAccount.prefix]"
     }
   }
 }
