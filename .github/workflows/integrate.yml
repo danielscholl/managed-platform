@@ -279,6 +279,6 @@ jobs:
       RG: ${{ needs.Validation.outputs.RESOURCEGROUP }}
       REGION: ${{ needs.Validation.outputs.REGION }}
 
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/develop'
     steps:
       - uses: actions/checkout@v2
