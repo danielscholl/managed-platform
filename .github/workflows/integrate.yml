@@ -1,4 +1,4 @@
-name: Integration Testing
+name: 2. Integrate
 
 permissions:
   id-token: write
