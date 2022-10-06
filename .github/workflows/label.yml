@@ -9,7 +9,7 @@ name: Label
 on: [pull_request]
 
 jobs:
-  label:
+  AddLabel:
     if: ${{ !github.event.pull_request.head.repo.fork }}
 
     runs-on: ubuntu-latest
