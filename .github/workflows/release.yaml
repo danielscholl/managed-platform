@@ -5,6 +5,10 @@ on:
 
 env:
   CLI_VERSION: 2.40.0
+  
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   Build:
