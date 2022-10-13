@@ -29,5 +29,12 @@
         }
       }
     }
+  },
+  "moduleAliases": {
+    "br": {
+      "PlatformRegistry": {
+        "registry": "managedplatform.azurecr.io"
+      }
+    }
   }
 }

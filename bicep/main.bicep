@@ -51,46 +51,46 @@ var vnetId = {
 var subnetId = '${vnetId[virtualNetworkNewOrExisting]}/subnets/${subnetName}'
 var podSubnetId = '${vnetId[virtualNetworkNewOrExisting]}/subnets/${podSubnetName}'
 
-module stgModule 'modules/azure_storage.bicep' = {
+module stgModule 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-storage:1.0.1' = {
   name: 'azure_storage'
   params: {
     prefix: storageAccountPrefix
-    type: storageAccountType
+    sku: storageAccountType
     location: location
   }
 }
 
-module keyvault 'modules/azure_keyvault.bicep' = {
+module keyvault 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-keyvault:1.0.1' = {
   name: 'azure_keyvault'
   params: {
-      name: 'kv-${uniqueString(resourceGroup().id)}'
+      resourceName: 'kv-${uniqueString(resourceGroup().id)}'
       location: location
   }
 }
 
 // Create a Managed User Identity for the Cluster
-module clusterIdentity 'modules/user_identity.bicep' = {
+module clusterIdentity 'br:managedplatform.azurecr.io/bicep/modules/platform/user-identity:1.0.1' = {
   name: 'user_identity_cluster'
   params: {
-    name: 'id-aks-${uniqueString(resourceGroup().id)}'
+    resourceName: 'id-aks-${uniqueString(resourceGroup().id)}'
     location: location
   }
 }
 
 // Create a Managed User Identity for the Pods
-module podIdentity 'modules/user_identity.bicep' = {
+module podIdentity 'br:managedplatform.azurecr.io/bicep/modules/platform/user-identity:1.0.1' = {
   name: 'user_identity_pod'
   params: {
-    name: 'id-pod-${uniqueString(resourceGroup().id)}'
+    resourceName: 'id-pod-${uniqueString(resourceGroup().id)}'
     location: location
   }
 }
 
 // Create Log Analytics Workspace
-module logAnalytics 'modules/azure_log_analytics.bicep' = {
+module logAnalytics 'br:managedplatform.azurecr.io/bicep/modules/platform/log-analytics:1.0.1' = {
   name: 'log_analytics'
   params: {
-    name: 'log-${uniqueString(resourceGroup().id)}'
+    resourceName: 'log-${uniqueString(resourceGroup().id)}'
     location: location
     sku: 'PerGB2018'
     retentionInDays: 30
@@ -105,23 +105,36 @@ module logAnalytics 'modules/azure_log_analytics.bicep' = {
 
 
 // Create Virtual Network
-module vnet 'modules/azure_vnet.bicep' = if (virtualNetworkNewOrExisting == 'new') {
+module vnet 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-vnet:1.0.1' = if (virtualNetworkNewOrExisting == 'new') {
   name: 'azure_vnet'
   params: {
-    name: virtualNetworkName
+    resourceName: virtualNetworkName
     location: location
-    workspaceId: logAnalytics.outputs.Id
-    addressPrefix: virtualNetworkAddressPrefix
-    clusterSubnet: subnetAddressPrefix
-    clusterSubnetName: subnetName
-    podSubnet: podSubnetAddressPrefix
-    podSubnetName: podSubnetName
-    rbacPermissions: [
+    diagnosticWorkspaceId: logAnalytics.outputs.id
+    addressPrefixes: [
+      virtualNetworkAddressPrefix
+    ]
+    subnets: [
       {
-        roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7' // Network Contributor
-        principalId: clusterIdentity.outputs.principalId
+        name: subnetName
+        addressPrefix: subnetAddressPrefix
+        privateEndpointNetworkPolicies: 'Disabled'
+        privateLinkServiceNetworkPolicies: 'Enabled'
+      }
+      {
+        name: podSubnetName
+        addressPrefix: podSubnetAddressPrefix
+        privateEndpointNetworkPolicies: 'Disabled'
+        privateLinkServiceNetworkPolicies: 'Enabled'
+      }
+    ]
+    roleAssignments: [
+      {
+        roleDefinitionIdOrName: 'Contributor'
+        principalIds: [
+          clusterIdentity.outputs.principalId
+        ]
         principalType: 'ServicePrincipal'
-        enabled: true
       }
     ]
   }
@@ -132,10 +145,11 @@ module vnet 'modules/azure_vnet.bicep' = if (virtualNetworkNewOrExisting == 'new
 }
 
 // Create Container Registry
-module acr 'modules/azure_registry.bicep' = {
+module acr 'br:managedplatform.azurecr.io/bicep/modules/platform/container-registry:1.0.2' = {
   name: 'container_registry'
   params: {
-    name: 'acr${uniqueString(resourceGroup().id)}'
+    resourceName: 'acr${uniqueString(resourceGroup().id)}'
+    location: location
   }
 }
 
@@ -148,8 +162,8 @@ module cluster 'modules/aks_cluster.bicep' = {
     version: aksVersion
     vmSize: vmSize
     nodeCount: nodeCount
-    identityId: clusterIdentity.outputs.resourceId
-    workspaceId: logAnalytics.outputs.Id
+    identityId: clusterIdentity.outputs.id
+    workspaceId: logAnalytics.outputs.id
     subnetId: subnetId
     podSubnetId: podSubnetId
   }
