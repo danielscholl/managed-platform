@@ -1,4 +1,4 @@
-name: Build
+name: Release
 
 on:
   workflow_dispatch:
@@ -67,4 +67,4 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.latest.outputs.tag }}
-          artifacts: "ui/ama.zip"
+          artifacts: "ui/ama.zip, ui/mainTemplate.json"

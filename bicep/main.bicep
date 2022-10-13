@@ -4,8 +4,6 @@ param storageAccountType string
 @description('Provide a prefix name for the storage account.')
 param storageAccountPrefix string = 'sa'
 
-param storagePrivateLink bool = false
-
 @description('Specify the Azure region to place the application definition.')
 param location string = resourceGroup().location
 
@@ -150,14 +148,26 @@ module acr 'br:managedplatform.azurecr.io/bicep/modules/platform/container-regis
   params: {
     resourceName: 'acr${uniqueString(resourceGroup().id)}'
     location: location
+    rbacPermissions: [
+      {
+        roleDefinitionResourceId: '/providers/Microsoft.Authorization/roleDefinitions/8311e382-0749-4cb8-b61a-304f252e45ec' //Acr Push Role
+        principalId: clusterIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        enabled: true
+      }
+    ]
   }
+  dependsOn: [
+    clusterIdentity
+    cluster
+  ]
 }
 
 // Create AKS Cluster
 module cluster 'modules/aks_cluster.bicep' = {
   name: 'azure_kubernetes'
   params: {
-    name: 'aks-${uniqueString(resourceGroup().id)}'
+    resourceName: 'aks-${uniqueString(resourceGroup().id)}'
     location: location
     version: aksVersion
     vmSize: vmSize
@@ -174,4 +184,4 @@ module cluster 'modules/aks_cluster.bicep' = {
   ]
 }
 
-output storagePrivateLink bool = storagePrivateLink
+output aksName string = cluster.outputs.name
