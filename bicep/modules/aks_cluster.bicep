@@ -54,10 +54,11 @@ param aksUpgradeChannel string = 'stable'
 param networkSettings object = {
   networkPlugin: 'azure' // Specifies the network plugin used for building Kubernetes network. - azure or kubenet.
   networkPolicy: 'calico' // Specifies the network policy used for building Kubernetes network. - calico or azure
-  podCidr: '10.244.0.0/16' // Specifies the CIDR notation IP range from which to assign pod IPs when kubenet is used.
-  serviceCidr: '172.16.0.0/22' // Must be cidr not in use any where else across the Network (Azure or Peered/On-Prem).  Can safely be used in multiple clusters - presuming this range is not broadcast/advertised in route tables.
-  dnsServiceIP: '172.16.0.10' // Ip Address for K8s DNS
-  dockerBridgeCidr: '172.16.4.1/22' // Used for the default docker0 bridge network that is required when using Docker as the Container Runtime.  Not used by AKS or Docker and is only cluster-routable.  Cluster IP based addresses are allocated from this range.  Can be safely reused in multiple clusters.
+  networkMode: 'overlay'  // Specifies the network mode for Azure CNI Overlay
+  podCidr: '10.240.100.0/22' // Specifies the CIDR notation IP range from which to assign pod IPs when kubenet is used.
+  serviceCidr: '172.10.0.0/16' // Must be cidr not in use any where else across the Network (Azure or Peered/On-Prem).  Can safely be used in multiple clusters - presuming this range is not broadcast/advertised in route tables.
+  dnsServiceIP: '172.10.0.10' // Ip Address for K8s DNS
+  dockerBridgeCidr: '172.17.0.1/16' // Used for the default docker0 bridge network that is required when using Docker as the Container Runtime.  Not used by AKS or Docker and is only cluster-routable.  Cluster IP based addresses are allocated from this range.  Can be safely reused in multiple clusters.
   outboundType: 'loadBalancer' // Specifies outbound (egress) routing method. - loadBalancer or userDefinedRouting.
   loadBalancerSku: 'standard' // Specifies the sku of the load balancer used by the virtual machine scale sets used by nodepools.
 }
@@ -217,6 +218,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
     networkProfile: {
       networkPlugin: networkSettings.networkPlugin
       networkPolicy: networkSettings.networkPolicy
+      networkPluginMode: networkSettings.networkPlugin=='azure' ? networkSettings.networkPluginMode : ''
       podCidr: networkSettings.podCidr
       serviceCidr: networkSettings.serviceCidr
       dnsServiceIP: networkSettings.dnsServiceIP

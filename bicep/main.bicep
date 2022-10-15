@@ -119,12 +119,12 @@ module vnet 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-vnet:1.0
         privateEndpointNetworkPolicies: 'Disabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
       }
-      {
-        name: podSubnetName
-        addressPrefix: podSubnetAddressPrefix
-        privateEndpointNetworkPolicies: 'Disabled'
-        privateLinkServiceNetworkPolicies: 'Enabled'
-      }
+      // {
+      //   name: podSubnetName
+      //   addressPrefix: podSubnetAddressPrefix
+      //   privateEndpointNetworkPolicies: 'Disabled'
+      //   privateLinkServiceNetworkPolicies: 'Enabled'
+      // }
     ]
     roleAssignments: [
       {
