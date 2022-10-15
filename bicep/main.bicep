@@ -162,7 +162,6 @@ module cluster 'modules/aks_cluster.bicep' = {
     identityId: clusterIdentity.outputs.id
     workspaceId: logAnalytics.outputs.id
     subnetId: subnetId
-    podSubnetId: podSubnetId
   }
   dependsOn: [
     clusterIdentity
