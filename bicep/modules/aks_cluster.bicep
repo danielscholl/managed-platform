@@ -213,7 +213,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
     networkProfile: {
       networkPlugin: networkSettings.networkPlugin
       networkPolicy: networkSettings.networkPolicy
-      networkPluginMode: networkSettings.networkPlugin=='azure' ? networkSettings.networkPluginMode : ''
+      networkMode: networkSettings.networkPlugin=='azure' ? networkSettings.networkMode : ''
       podCidr: networkSettings.podCidr
       serviceCidr: networkSettings.serviceCidr
       dnsServiceIP: networkSettings.dnsServiceIP
