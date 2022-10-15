@@ -149,7 +149,7 @@ var addOn = {
 
 var name = 'aks-${uniqueString(resourceGroup().id, resourceName)}'
 
-resource aks 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
+resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
   name: length(name) > 63 ? substring(name, 0, 63) : name
   location: location
 
