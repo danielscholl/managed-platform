@@ -17,9 +17,6 @@ param vmSize string = 'Standard_D4s_v3'
 @description('Specify the cluster nodes subnet.')
 param subnetId string
 
-@description('Specify the cluster pods subnet.')
-param podSubnetId string
-
 @description('Specify the Log Analytics Workspace Id to use for monitoring.')
 param workspaceId string
 
@@ -107,7 +104,6 @@ param defaultNodePool object = {
     'CriticalAddonsOnly=true:NoSchedule'
   ]
   vnetSubnetID: subnetId
-  podSubnetID: podSubnetId
 }
 
 @description('Specify the User Node Pool Settings')
@@ -132,7 +128,6 @@ param userNodePool object = {
     '3'
   ]
   vnetSubnetID: subnetId
-  podSubnetID: podSubnetId
 }
 
 
