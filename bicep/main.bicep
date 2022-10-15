@@ -25,12 +25,6 @@ param subnetName string = 'NodeSubnet'
 @description('Subnet address prefix')
 param subnetAddressPrefix string = '10.1.0.0/24'
 
-@description('New or Existing subnet Name')
-param podSubnetName string = 'PodSubnet'
-
-@description('Subnet address prefix')
-param podSubnetAddressPrefix string = '10.1.1.0/24'
-
 @description('Version of the AKS Cluster')
 param aksVersion string = '1.24.3'
 
@@ -119,12 +113,6 @@ module vnet 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-vnet:1.0
         privateEndpointNetworkPolicies: 'Disabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
       }
-      // {
-      //   name: podSubnetName
-      //   addressPrefix: podSubnetAddressPrefix
-      //   privateEndpointNetworkPolicies: 'Disabled'
-      //   privateLinkServiceNetworkPolicies: 'Enabled'
-      // }
     ]
     roleAssignments: [
       {
