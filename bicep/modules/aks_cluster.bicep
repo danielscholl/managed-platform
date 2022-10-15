@@ -51,7 +51,7 @@ param aksUpgradeChannel string = 'stable'
 param networkSettings object = {
   networkPlugin: 'azure' // Specifies the network plugin used for building Kubernetes network. - azure or kubenet.
   networkPolicy: 'calico' // Specifies the network policy used for building Kubernetes network. - calico or azure
-  networkMode: 'overlay'  // Specifies the network mode for Azure CNI Overlay
+  networkPluginMode: 'overlay'  // Specifies the network mode for Azure CNI Overlay
   podCidr: '10.240.100.0/22' // Specifies the CIDR notation IP range from which to assign pod IPs when kubenet is used.
   serviceCidr: '172.10.0.0/16' // Must be cidr not in use any where else across the Network (Azure or Peered/On-Prem).  Can safely be used in multiple clusters - presuming this range is not broadcast/advertised in route tables.
   dnsServiceIP: '172.10.0.10' // Ip Address for K8s DNS
@@ -149,7 +149,7 @@ var addOn = {
 
 var name = 'aks-${uniqueString(resourceGroup().id, resourceName)}'
 
-resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
+resource aks 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
   name: length(name) > 63 ? substring(name, 0, 63) : name
   location: location
 
@@ -213,7 +213,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-07-02-preview' = {
     networkProfile: {
       networkPlugin: networkSettings.networkPlugin
       networkPolicy: networkSettings.networkPolicy
-      networkMode: networkSettings.networkPlugin=='azure' ? networkSettings.networkMode : ''
+      networkPluginMode: networkSettings.networkPlugin=='azure' ? networkSettings.networkPluginMode : ''
       podCidr: networkSettings.podCidr
       serviceCidr: networkSettings.serviceCidr
       dnsServiceIP: networkSettings.dnsServiceIP
