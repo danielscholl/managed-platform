@@ -41,7 +41,6 @@ var vnetId = {
 }
 
 var subnetId = '${vnetId[virtualNetworkNewOrExisting]}/subnets/${subnetName}'
-var podSubnetId = '${vnetId[virtualNetworkNewOrExisting]}/subnets/${podSubnetName}'
 
 module stgModule 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-storage:1.0.1' = {
   name: 'azure_storage'

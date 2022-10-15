@@ -150,18 +150,6 @@
                   "minAddressCount": 12,
                   "requireContiguousAddresses": true
                 }
-              },
-              "podsubnet": {
-                "label": "Pod Subnet",
-                "defaultValue": {
-                  "name": "podsubnet",
-                  "addressPrefixSize": "/24"
-                },
-                "constraints": {
-                  "minAddressPrefixSize": "/24",
-                  "minAddressCount": 12,
-                  "requireContiguousAddresses": true
-                }
               }
             },
             "visible": true
@@ -197,8 +185,6 @@
       "virtualNetworkResourceGroup": "[steps('networkingConfigBlade').vnet.resourceGroup]",
       "subnetName": "[steps('networkingConfigBlade').vnet.subnets.clustersubnet.name]",
       "subnetAddressPrefix": "[steps('networkingConfigBlade').vnet.subnets.clustersubnet.addressPrefix]",
-      "podSubnetName": "[steps('networkingConfigBlade').vnet.subnets.podsubnet.name]",
-      "podSubnetAddressPrefix": "[steps('networkingConfigBlade').vnet.subnets.podsubnet.addressPrefix]", 
       "storageAccountType": "[steps('storageConfigBlade').storageAccount.type]",
       "storageAccountPrefix": "[steps('storageConfigBlade').storageAccount.prefix]"
     }
