@@ -1,14 +1,15 @@
 name: Release
 
+permissions:
+  id-token: write
+  contents: read
+
 on:
   workflow_dispatch:
 
 env:
   CLI_VERSION: 2.40.0
   
-permissions:
-  id-token: write
-  contents: read
 
 jobs:
   Build:
@@ -26,6 +27,9 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+          environment: azurecloud
+          allow-no-subscriptions: false
 
       - name: Build Managed App Deployment
         uses: Azure/bicep-build-action@v1.0.0
