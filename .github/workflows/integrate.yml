@@ -30,7 +30,7 @@ on:
         required: false
       region:
         description: 'Region (needs to be same as byo vnet location)'
-        default: 'southcentralus'
+        default: 'westcentralus'
         type: text
         required: false
       doStandards:
