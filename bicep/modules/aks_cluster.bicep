@@ -47,25 +47,81 @@ param version string = '1.24.3'
 param aksUpgradeChannel string = 'stable'
 
 
-@description('Specify the Network Settings')
-param networkSettings object = {
-  networkPlugin: 'azure' // Specifies the network plugin used for building Kubernetes network. - azure or kubenet.
-  networkPolicy: 'calico' // Specifies the network policy used for building Kubernetes network. - calico or azure
-  networkPluginMode: 'overlay'  // Specifies the network mode for Azure CNI Overlay
-  podCidr: '10.240.100.0/22' // Specifies the CIDR notation IP range from which to assign pod IPs when kubenet is used.
-  serviceCidr: '172.10.0.0/16' // Must be cidr not in use any where else across the Network (Azure or Peered/On-Prem).  Can safely be used in multiple clusters - presuming this range is not broadcast/advertised in route tables.
-  dnsServiceIP: '172.10.0.10' // Ip Address for K8s DNS
-  dockerBridgeCidr: '172.17.0.1/16' // Used for the default docker0 bridge network that is required when using Docker as the Container Runtime.  Not used by AKS or Docker and is only cluster-routable.  Cluster IP based addresses are allocated from this range.  Can be safely reused in multiple clusters.
-  outboundType: 'loadBalancer' // Specifies outbound (egress) routing method. - loadBalancer or userDefinedRouting.
-  loadBalancerSku: 'standard' // Specifies the sku of the load balancer used by the virtual machine scale sets used by nodepools.
-}
+@allowed([
+  'azure'
+  'kubenet'
+])
+@description('The network plugin type')
+param networkPlugin string = 'azure'
 
-@description('Specify the API Server Access Settings')
-param apiSettings object = {
-  privateCluster: false // Specifies whether to create the cluster as a private cluster or not.
-  privateClusterPublicFQDN: false // If true, the cluster will have a private DNS name.  If false, the cluster will have a public DNS name.// Specifies whether to create additional public FQDN for private cluster or not.
-  privateDNSZone: '' // Specifies the Private DNS Zone mode for private cluster. When the value is equal to None, a Public DNS Zone is used in place of a Private DNS Zone
-}
+@allowed([
+  ''
+  'Overlay'
+])
+@description('The network plugin type')
+param networkPluginMode string = ''
+
+@allowed([
+  ''
+  'azure'
+  'calico'
+])
+@description('The network policy to use.')
+param networkPolicy string = ''
+
+@minLength(9)
+@maxLength(18)
+@description('The address range to use for pods')
+param podCidr string = '10.240.100.0/22'
+
+@description('Allocate pod ips dynamically')
+param cniDynamicIpAllocation bool = false
+
+@minLength(9)
+@maxLength(18)
+@description('The address range to use for services')
+param serviceCidr string = '172.10.0.0/16'
+
+@minLength(7)
+@maxLength(15)
+@description('The IP address to reserve for DNS')
+param dnsServiceIP string = '172.10.0.10'
+
+@minLength(9)
+@maxLength(18)
+@description('The address range to use for the docker bridge')
+param dockerBridgeCidr string = '172.17.0.1/16'
+
+@allowed([
+  'loadBalancer'
+  'managedNATGateway'
+  'userAssignedNATGateway'
+])
+@description('Outbound traffic type for the egress traffic of your cluster')
+param aksOutboundTrafficType string = 'loadBalancer'
+
+
+// API Server Access Settings
+@description('The IP addresses that are allowed to access the API server')
+param authorizedIPRanges array = []
+
+@description('Enable private cluster')
+param enablePrivateCluster bool = false
+
+@allowed([
+  'system'
+  'none'
+  'privateDnsZone'
+])
+@description('Private cluster dns advertisment method, leverages the dnsApiPrivateZoneId parameter')
+param privateClusterDnsMethod string = 'system'
+
+@description('The full Azure resource ID of the privatelink DNS zone to use for the AKS cluster API Server')
+param dnsApiPrivateZoneId string = ''
+
+@description('Sets the private dns zone id if provided')
+var aksPrivateDnsZone = privateClusterDnsMethod=='privateDnsZone' ? (!empty(dnsApiPrivateZoneId) ? dnsApiPrivateZoneId : 'system') : privateClusterDnsMethod
+output aksPrivateDnsZone string = aksPrivateDnsZone
 
 @description('Specify the AutoScale Settings')
 param scalerSettings object = {
@@ -144,7 +200,6 @@ var addOn = {
   oidcEnabled: true // Specifies whether the oidc issuer add-on is enabled or not.
   defenderEnabled: true // Specifies whether the defender add-on is enabled or not.
   meshEnabled: true // Specifies whether the Open Serivce Mesh add-on is enabled or not.
-  fluxEnabled: true // Specifies whether the flux add-on is enabled or not.
 }
 
 var name = 'aks-${uniqueString(resourceGroup().id, resourceName)}'
@@ -209,18 +264,18 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
         enabled: addOn.podIdentityProfileEnabled
       }
 
-
-    networkProfile: {
-      networkPlugin: networkSettings.networkPlugin
-      networkPolicy: networkSettings.networkPolicy
-      networkPluginMode: networkSettings.networkPlugin=='azure' ? networkSettings.networkPluginMode : ''
-      podCidr: networkSettings.podCidr
-      serviceCidr: networkSettings.serviceCidr
-      dnsServiceIP: networkSettings.dnsServiceIP
-      dockerBridgeCidr: networkSettings.dockerBridgeCidr
-      outboundType: networkSettings.outboundType
-      loadBalancerSku: networkSettings.loadBalancerSku
-    }
+      networkProfile: {
+        loadBalancerSku: 'standard'
+        networkPlugin: networkPlugin
+        #disable-next-line BCP036 //Disabling validation of this parameter to cope with empty string to indicate no Network Policy required.
+        networkPolicy: networkPolicy
+        networkPluginMode: networkPlugin=='azure' ? networkPluginMode : ''
+        podCidr: networkPlugin=='kubenet' || cniDynamicIpAllocation ? podCidr : json('null')
+        serviceCidr: serviceCidr
+        dnsServiceIP: dnsServiceIP
+        dockerBridgeCidr: dockerBridgeCidr
+        outboundType: aksOutboundTrafficType
+      }
 
     enableRBAC: true
 
@@ -239,12 +294,14 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
       'max-graceful-termination-sec': scalerSettings.maxGracefulTerminationSec
     }
 
-    apiServerAccessProfile: {
-      enablePrivateCluster: apiSettings.privateCluster
-      privateDNSZone: apiSettings.privateDNSZone
-      enablePrivateClusterPublicFQDN: apiSettings.privateClusterPublicFQDN
-    }
-
+    apiServerAccessProfile: !empty(authorizedIPRanges) ? {
+    authorizedIPRanges: authorizedIPRanges
+  } : {
+    enablePrivateCluster: enablePrivateCluster
+    privateDNSZone: enablePrivateCluster ? aksPrivateDnsZone : ''
+    enablePrivateClusterPublicFQDN: enablePrivateCluster && privateClusterDnsMethod=='none'
+  }
+  
     workloadAutoScalerProfile: {
       keda: {
         enabled: addOn.kedaEnabled
@@ -277,8 +334,9 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
   }
 }
 
+param fluxGitOpsAddon bool = false
 
-resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-preview' = if(addOn.fluxEnabled) {
+resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-preview' = if(fluxGitOpsAddon) {
   name: 'flux'
   scope: aks
   properties: {
@@ -294,5 +352,24 @@ resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-prev
   }
   dependsOn: [aks]
 }
+output fluxReleaseNamespace string = fluxGitOpsAddon ? fluxAddon.properties.scope.cluster.releaseNamespace : ''
+
+
+// resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-preview' = if(addOn.fluxEnabled) {
+//   name: 'flux'
+//   scope: aks
+//   properties: {
+//     extensionType: 'microsoft.flux'
+//     autoUpgradeMinorVersion: true
+//     releaseTrain: 'Stable'
+//     scope: {
+//       cluster: {
+//         releaseNamespace: 'flux-system'
+//       }
+//     }
+//     configurationProtectedSettings: {}
+//   }
+//   dependsOn: [aks]
+// }
 
 output name string = aks.name

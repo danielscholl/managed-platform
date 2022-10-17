@@ -150,6 +150,17 @@ module acr 'br:managedplatform.azurecr.io/bicep/modules/platform/container-regis
   ]
 }
 
+var imageNames = []
+
+module acrImport 'br/public:deployment-scripts/import-acr:2.0.1' = if (!empty(imageNames)) {
+  name: 'imageImport'
+  params: {
+    acrName: acr.name
+    location: location
+    images: imageNames
+  }
+}
+
 // Create AKS Cluster
 module cluster 'modules/aks_cluster.bicep' = {
   name: 'azure_kubernetes'
