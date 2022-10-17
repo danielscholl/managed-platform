@@ -68,6 +68,7 @@ jobs:
           cd ui
           rm -f ama.zip
           zip ama.zip createUiDefinition.json mainTemplate.json viewDefinition.json
+          cp mainTemplate.json azuredeploy.json
         shell: bash
 
       - name: Find Latest Tag
@@ -79,4 +80,4 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.latest.outputs.tag }}
-          artifacts: "ui/ama.zip, ui/mainTemplate.json"
+          artifacts: "ui/ama.zip, ui/azuredeploy.json"
