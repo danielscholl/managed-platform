@@ -119,7 +119,7 @@ jobs:
       - name: Parameter Value Augmentation
         id: params
         env:
-          DEFAULTRGNAME: managed-platform-ci
+          DEFAULTRGNAME: managed-platform-integration
         run: |
             if [ -z "${{ github.event.inputs.region }}" ]
             then
