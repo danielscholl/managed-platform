@@ -344,10 +344,13 @@ jobs:
           echo "Param file path is: ${{ env.ParamFilePath }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "AKS name is ${{ needs.Deploy.outputs.AKS_NAME }}"
+
       - name: Azure Login
         uses: Azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
           environment: azurecloud
           allow-no-subscriptions: false
