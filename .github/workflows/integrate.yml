@@ -35,7 +35,7 @@ on:
         required: false
       doStandards:
         description: 'Perform the Well Architected Framework assesment'
-        default: true
+        default: false
         type: boolean
         required: false
       doDebugSteps:
