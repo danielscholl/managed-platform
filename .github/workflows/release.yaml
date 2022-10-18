@@ -67,6 +67,7 @@ jobs:
         run: |
           cd ui
           rm -f ama.zip
+          rm azuredeploy.json
           zip ama.zip createUiDefinition.json mainTemplate.json viewDefinition.json
           cp mainTemplate.json azuredeploy.json
         shell: bash
