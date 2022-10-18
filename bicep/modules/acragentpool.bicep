@@ -1,3 +1,8 @@
+/*
+  This is a custom module that configures Azure Container Registry Agent Pools.
+  https://learn.microsoft.com/en-us/azure/container-registry/tasks-agent-pools
+*/
+
 param location string = resourceGroup().location
 param acrName string
 param acrPoolSubnetId string = ''

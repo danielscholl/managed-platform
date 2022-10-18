@@ -1,12 +1,23 @@
-//For more information about the AAD Workload Identity mutating admission webhook : https://azure.github.io/azure-workload-identity/docs/installation/mutating-admission-webhook.html
+/*
+  This is a custom module that deploys a workload identity helm chart.
+  https://azure.github.io/azure-workload-identity/docs/installation/mutating-admission-webhook.html
+*/
 
+
+@description('The name of the AKS cluster.')
 param aksName string
+
+@description('The region location')
 param location string = resourceGroup().location
+
+@description('The Tenant Id.')
 param tenantId string = subscription().tenantId
+
+@description('The namespace for the chart.')
 param namespace string = 'azure-workload-identity-system'
 
 var contributor='b24988ac-6180-42a0-ab88-20f7382dd24c'
-var rbacWriter='a7ffa36f-339b-4b5c-8bdf-e2c188b2c0eb'
+// var rbacWriter='a7ffa36f-339b-4b5c-8bdf-e2c188b2c0eb'
 var rbacClusterAdmin='b1ff04bb-8a4e-4dc4-8eb5-8693973ce19b'
 
 var unformattedHelmCommands = '''

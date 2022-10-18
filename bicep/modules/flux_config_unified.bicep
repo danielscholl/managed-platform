@@ -1,14 +1,24 @@
+/*
+  This is a flux GitOps Configuration for the Baseline Example
+  https://github.com/mspnp/aks-baseline
+*/
+
+@description('The name of the AKS cluster.')
 param aksName string
 
+@description('The namespace for flux.')
 param aksFluxAddOnReleaseNamespace string = 'flux-system'
 
 resource aks 'Microsoft.ContainerService/managedClusters@2022-03-02-preview' existing = {
   name: aksName
 }
 
-@description('The Git Repository URL where your flux configuration is homed')
-param fluxConfigRepo string = '' //''https://github.com/mspnp/aks-baseline''
 
+
+@description('The Git Repository URL where your flux configuration is homed')
+param fluxConfigRepo string = ''
+
+@description('The Git Repository Branch where your flux configuration is homed')
 param fluxConfigRepoBranch string = 'main'
 
 @description('The name of the flux configuration to apply')
@@ -25,6 +35,7 @@ var fluxRepoUsernameB64 = base64(fluxRepoUsername)
 param fluxRepoPassword string = ''
 var fluxRepoPasswordB64 = base64(fluxRepoPassword)
 
+@description('The Git Repository path for manifests')
 param fluxRepoPath string = './cluster-manifests'
 
 resource fluxConfig 'Microsoft.KubernetesConfiguration/fluxConfigurations@2022-03-01' = {
