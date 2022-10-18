@@ -13,6 +13,9 @@ on:
 
 jobs:
   Validation:
+    permissions:
+      id-token: write
+      contents: write
     runs-on: ubuntu-latest
 
     steps:
