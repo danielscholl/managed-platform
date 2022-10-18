@@ -1,5 +1,18 @@
 targetScope = 'resourceGroup'
 
+/*______      ___      .______          ___      .___  ___.  _______ .___________. _______ .______          _______.
+|   _  \    /   \     |   _  \        /   \     |   \/   | |   ____||           ||   ____||   _  \        /       |
+|  |_)  |  /  ^  \    |  |_)  |      /  ^  \    |  \  /  | |  |__   `---|  |----`|  |__   |  |_)  |      |   (----`
+|   ___/  /  /_\  \   |      /      /  /_\  \   |  |\/|  | |   __|      |  |     |   __|  |      /        \   \    
+|  |     /  _____  \  |  |\  \----./  _____  \  |  |  |  | |  |____     |  |     |  |____ |  |\  \----.----)   |   
+| _|    /__/     \__\ | _| `._____/__/     \__\ |__|  |__| |_______|    |__|     |_______|| _| `._____|_______/    
+*/
+                                                                                                                   
+
+////////////////////
+// Basic Details
+////////////////////
+
 @minLength(1)
 @maxLength(63)
 @description('Used to name all resources')
@@ -8,23 +21,8 @@ param resourceName string
 @description('Specify the location of the AKS cluster.')
 param location string = resourceGroup().location
 
-@description('Specify the amount of nodes for the User Node Pool.')
-param nodeCount int = 3
-
-@description('Specify the Server Size for the User Node Pool.')
-param vmSize string = 'Standard_D4s_v3'
-
-@description('Specify the cluster nodes subnet.')
-param subnetId string
-
-@description('Specify the Log Analytics Workspace Id to use for monitoring.')
-param workspaceId string
-
-@description('Specify the User Managed Identity Resource Id.')
-param identityId string
-
-@description('Specifies the DNS prefix specified when creating the managed cluster.')
-param dnsPrefix string = 'aks-${resourceGroup().name}'
+@description('The ID of the Azure AD tenant')
+param aad_tenant_id string = ''
 
 @description('Specifies the tier of a managed cluster SKU: Paid or Free')
 @allowed([
@@ -46,6 +44,95 @@ param version string = '1.24.3'
 ])
 param aksUpgradeChannel string = 'stable'
 
+@description('The zones to use for a node pool')
+param availabilityZones array = []
+
+@description('The number of agents for the user node pool')
+param agentCount int = 3
+
+@description('The maximum number of nodes for the user node pool')
+param agentCountMax int = 0
+var autoScale = agentCountMax > agentCount
+
+@description('Specify the Server Size for the User Node Pool.')
+param vmSize string = 'Standard_DS3_v2'
+
+@minValue(10)
+@maxValue(250)
+@description('The maximum number of pods per node.')
+param maxPods int = 30
+
+@allowed([
+  'Ephemeral'
+  'Managed'
+])
+@description('OS disk type')
+param osDiskType string = 'Ephemeral'
+
+@description('Disk size in GB')
+param osDiskSizeGB int = 0
+
+
+
+////////////////////
+// Compute Configuration
+////////////////////
+
+@description('Only use the system node pool')
+param JustUseSystemPool bool = false
+
+@allowed([
+  'CostOptimised'
+  'Standard'
+  'HighSpec'
+  'Custom'
+])
+@description('The System Pool Preset sizing')
+param SystemPoolType string = 'CostOptimised'
+
+@description('A custom system pool spec')
+param SystemPoolCustomPreset object = {}
+
+@description('The System Pool Preset sizing')
+param AutoscaleProfile object = {
+  'balance-similar-node-groups': 'true'
+  expander: 'random'
+  'max-empty-bulk-delete': '10'
+  'max-graceful-termination-sec': '600'
+  'max-node-provision-time': '15m'
+  'max-total-unready-percentage': '45'
+  'new-pod-scale-up-delay': '0s'
+  'ok-total-unready-count': '3'
+  'scale-down-delay-after-add': '10m'
+  'scale-down-delay-after-delete': '20s'
+  'scale-down-delay-after-failure': '3m'
+  'scale-down-unneeded-time': '10m'
+  'scale-down-unready-time': '20m'
+  'scale-down-utilization-threshold': '0.5'
+  'scan-interval': '10s'
+  'skip-nodes-with-local-storage': 'true'
+  'skip-nodes-with-system-pods': 'true'
+}
+
+
+////////////////////
+// Required Items to link to other resources
+////////////////////
+
+@description('Specify the Log Analytics Workspace Id to use for monitoring.')
+param workspaceId string
+
+@description('Specify the User Managed Identity Resource Id.')
+param identityId string
+
+@description('Specify the cluster nodes subnet.')
+param subnetId string
+
+
+
+////////////////////
+// Network Configuration
+////////////////////
 
 @allowed([
   'azure'
@@ -100,10 +187,14 @@ param dockerBridgeCidr string = '172.17.0.1/16'
 @description('Outbound traffic type for the egress traffic of your cluster')
 param aksOutboundTrafficType string = 'loadBalancer'
 
+@description('Specifies the DNS prefix specified when creating the managed cluster.')
+param dnsPrefix string = 'aks-${resourceGroup().name}'
 
-// API Server Access Settings
-@description('The IP addresses that are allowed to access the API server')
-param authorizedIPRanges array = []
+
+
+////////////////////
+// Security Settings
+////////////////////
 
 @description('Enable private cluster')
 param enablePrivateCluster bool = false
@@ -119,90 +210,169 @@ param privateClusterDnsMethod string = 'system'
 @description('The full Azure resource ID of the privatelink DNS zone to use for the AKS cluster API Server')
 param dnsApiPrivateZoneId string = ''
 
+@description('The IP addresses that are allowed to access the API server')
+param authorizedIPRanges array = []
+
+
+@allowed([
+  ''
+  'audit'
+  'deny'
+])
+@description('Enable the Azure Policy addon')
+param azurepolicy string = ''
+
+
+
+////////////////////
+// Add Ons
+////////////////////
+
+@description('Enables Kubernetes Event-driven Autoscaling (KEDA)')
+param kedaEnabled bool = false
+
+@description('Enables Open Service Mesh')
+param openServiceMeshEnabled bool = false
+
+@description('Configures the cluster as an OIDC issuer for use with Workload Identity')
+param workloadIdentityEnabled bool = false
+
+@description('Configures the cluster to use Azure Defender')
+param defenderEnabled bool = false
+
+@description('Installs the AKS KV CSI provider')
+param keyvaultEnabled bool = false
+
+@description('Rotation poll interval for the AKS KV CSI provider')
+param keyVaultAksCSIPollInterval string = '2m'
+
+@description('Enable Azure AD integration on AKS')
+param enable_aad bool = false
+
+@description('Enable RBAC using AAD')
+param enableAzureRBAC bool = false
+
+
+/*__    ____  ___      .______       __       ___      .______    __       _______     _______.
+\   \  /   / /   \     |   _  \     |  |     /   \     |   _  \  |  |     |   ____|   /       |
+ \   \/   / /  ^  \    |  |_)  |    |  |    /  ^  \    |  |_)  | |  |     |  |__     |   (----`
+  \      / /  /_\  \   |      /     |  |   /  /_\  \   |   _  <  |  |     |   __|     \   \    
+   \    / /  _____  \  |  |\  \----.|  |  /  _____  \  |  |_)  | |  `----.|  |____.----)   |   
+    \__/ /__/     \__\ | _| `._____||__| /__/     \__\ |______/  |_______||_______|_______/    
+*/
+                                                                                               
+
+
+@description('The name of the AKS cluster.')
+var name = 'aks-${uniqueString(resourceGroup().id, resourceName)}'
+
 @description('Sets the private dns zone id if provided')
 var aksPrivateDnsZone = privateClusterDnsMethod=='privateDnsZone' ? (!empty(dnsApiPrivateZoneId) ? dnsApiPrivateZoneId : 'system') : privateClusterDnsMethod
 output aksPrivateDnsZone string = aksPrivateDnsZone
 
-@description('Specify the AutoScale Settings')
-param scalerSettings object = {
-  scanInterval: '10s'
-  scaleDownDelayAfterAdd: '10m'
-  scaleDownDelayAfterDelete: '20s'
-  scaleDownDelayAfterFailure: '3m'
-  scaleDownUnneededTime: '10m'
-  scaleDownUnreadyTime: '20m'
-  utilizationThreshold: '0.5'
-  maxGracefulTerminationSec: '600'
+@description('System Pool presets are derived from the recommended system pool specs')
+var systemPoolPresets = {
+  CostOptimised : {
+    vmSize: 'Standard_B4ms'
+    count: 1
+    minCount: 1
+    maxCount: 3
+    enableAutoScaling: true
+    availabilityZones: []
+  }
+  Standard : {
+    vmSize: 'Standard_DS2_v2'
+    count: 3
+    minCount: 3
+    maxCount: 5
+    enableAutoScaling: true
+    availabilityZones: [
+      '1'
+      '2'
+      '3'
+    ]
+  }
+  HighSpec : {
+    vmSize: 'Standard_D4s_v3'
+    count: 3
+    minCount: 3
+    maxCount: 5
+    enableAutoScaling: true
+    availabilityZones: [
+      '1'
+      '2'
+      '3'
+    ]
+  }
 }
 
-@description('Specify the System Node Pool Settings')
-param defaultNodePool object = {
-  name: 'systempool01'
-  count: 3
-  vmSize: 'Standard_D2s_v3'
-  osDiskSizeGB: 50
-  osDiskType: 'Ephemeral'
-  maxPods: 30
-  osType: 'Linux'
-  maxCount: 5
-  minCount: 3
-  scaleSetPriority: 'Regular'
-  scaleSetEvictionPolicy: 'Delete'
-  enableAutoScaling: true
+var systemPoolBase = {
+  name: 'npsystem'
   mode: 'System'
-  type: 'VirtualMachineScaleSets'
-  availablityZones: [
-    '1'
-    '2'
-    '3'
-  ]
-  nodeTaints: [
-    'CriticalAddonsOnly=true:NoSchedule'
-  ]
-  vnetSubnetID: subnetId
-}
-
-@description('Specify the User Node Pool Settings')
-param userNodePool object = {
-  name: 'nodepool1'
-  count: nodeCount
-  vmSize: vmSize
-  osDiskSizeGB: 100
-  osDiskType: 'Ephemeral'
-  maxPods: 30
   osType: 'Linux'
-  maxCount: 5
-  minCount: 3
-  scaleSetPriority: 'Regular'
-  scaleSetEvictionPolicy: 'Delete'
-  enableAutoScaling: true
-  mode: 'User'
+  maxPods: 30
   type: 'VirtualMachineScaleSets'
-  availablityZones: [
-    '1'
-    '2'
-    '3'
+  vnetSubnetID: !empty(subnetId) ? subnetId : json('null')
+  upgradeSettings: {
+    maxSurge: '33%'
+  }
+  nodeTaints: [
+    JustUseSystemPool ? '' : 'CriticalAddonsOnly=true:NoSchedule'
   ]
-  vnetSubnetID: subnetId
 }
 
-
-
-// AKS Feature Add On Configurations
-var addOn = {
-  aciConnectorLinuxEnabled: false // Specifies whether the aciConnectorLinux add-on is enabled or not.
-  azurePolicyEnabled: true // Specifies whether the azurePolicy add-on is enabled or not.
-  kubeDashboardEnabled: false // Specifies whether the kubeDashboard add-on is enabled or not.
-  httpApplicationRoutingEnabled: true // Specifies whether the httpApplicationRouting add-on is enabled or not.
-  podIdentityProfileEnabled: false // Specifies whether the podIdentityProfile add-on is enabled or not.
-  kvCsiDriverEnabled: true // Specifies whether the kvCsiDriver add-on is enabled or not.
-  kedaEnabled: true // Specifies whether the keda add-on is enabled or not.
-  oidcEnabled: true // Specifies whether the oidc issuer add-on is enabled or not.
-  defenderEnabled: true // Specifies whether the defender add-on is enabled or not.
-  meshEnabled: true // Specifies whether the Open Serivce Mesh add-on is enabled or not.
+var userPoolVmProfile = {
+  vmSize: vmSize
+  count: agentCount
+  minCount: autoScale ? agentCount : json('null')
+  maxCount: autoScale ? agentCountMax : json('null')
+  enableAutoScaling: autoScale
+  availabilityZones: !empty(availabilityZones) ? availabilityZones : null
 }
 
-var name = 'aks-${uniqueString(resourceGroup().id, resourceName)}'
+var agentPoolProfileUser = union({
+  name: 'npuser01'
+  mode: 'User'
+  osDiskType: osDiskType
+  osDiskSizeGB: osDiskSizeGB
+  osType: 'Linux'
+  maxPods: maxPods
+  type: 'VirtualMachineScaleSets'
+  vnetSubnetID: !empty(subnetId) ? subnetId : json('null')
+  upgradeSettings: {
+    maxSurge: '33%'
+  }
+}, userPoolVmProfile)
+
+var agentPoolProfiles = JustUseSystemPool ? array(union(systemPoolBase, userPoolVmProfile)) : concat(array(union(systemPoolBase, SystemPoolType=='Custom' && SystemPoolCustomPreset != {} ? SystemPoolCustomPreset : systemPoolPresets[SystemPoolType])), array(agentPoolProfileUser))
+
+
+var aks_addons = union({
+  azurepolicy: {
+    config: {
+      version: !empty(azurepolicy) ? 'v2' : json('null')
+    }
+    enabled: !empty(azurepolicy)
+  }
+  azureKeyvaultSecretsProvider: {
+    config: {
+      enableSecretRotation: 'true'
+      rotationPollInterval: keyVaultAksCSIPollInterval
+    }
+    enabled: keyvaultEnabled
+  }
+  openServiceMesh: {
+    enabled: openServiceMeshEnabled
+    config: {}
+  }
+}, !(empty(workspaceId)) ? {
+  omsagent: {
+    enabled: !(empty(workspaceId))
+    config: {
+      logAnalyticsWorkspaceResourceID: !(empty(workspaceId)) ? workspaceId : json('null')
+    }
+  }} : {})
+
 
 resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
   name: length(name) > 63 ? substring(name, 0, 63) : name
@@ -225,98 +395,56 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
     nodeResourceGroup: 'MC_${resourceGroup().name}_${name}'
     dnsPrefix: dnsPrefix
 
-    agentPoolProfiles: [
-      defaultNodePool
-      userNodePool
-    ]
+    agentPoolProfiles: agentPoolProfiles
+    addonProfiles:  aks_addons
 
-    addonProfiles: {
-      httpApplicationRouting: {
-        enabled: addOn.httpApplicationRoutingEnabled
-      }
-      omsagent: {
-        enabled: true
-        config: {
-          logAnalyticsWorkspaceResourceID: workspaceId
-        }
-      }
-      aciConnectorLinux: {
-        enabled: addOn.aciConnectorLinuxEnabled
-      }
-      azurepolicy: {
-        enabled: addOn.azurePolicyEnabled
-        config: {
-          version: 'v2'
-        }
-      }
-      kubeDashboard: {
-        enabled: addOn.kubeDashboardEnabled
-      }
-      azurekeyvaultsecretsprovider: {
-        enabled: addOn.kvCsiDriverEnabled
-      }
-      openServiceMesh: {
-        enabled: addOn.meshEnabled
-      }
+    networkProfile: {
+      loadBalancerSku: 'standard'
+      networkPlugin: networkPlugin
+      #disable-next-line BCP036 //Disabling validation of this parameter to cope with empty string to indicate no Network Policy required.
+      networkPolicy: networkPolicy
+      networkPluginMode: networkPlugin=='azure' ? networkPluginMode : ''
+      podCidr: networkPlugin=='kubenet' || cniDynamicIpAllocation ? podCidr : json('null')
+      serviceCidr: serviceCidr
+      dnsServiceIP: dnsServiceIP
+      dockerBridgeCidr: dockerBridgeCidr
+      outboundType: aksOutboundTrafficType
     }
 
-      podIdentityProfile: {
-        enabled: addOn.podIdentityProfileEnabled
-      }
-
-      networkProfile: {
-        loadBalancerSku: 'standard'
-        networkPlugin: networkPlugin
-        #disable-next-line BCP036 //Disabling validation of this parameter to cope with empty string to indicate no Network Policy required.
-        networkPolicy: networkPolicy
-        networkPluginMode: networkPlugin=='azure' ? networkPluginMode : ''
-        podCidr: networkPlugin=='kubenet' || cniDynamicIpAllocation ? podCidr : json('null')
-        serviceCidr: serviceCidr
-        dnsServiceIP: dnsServiceIP
-        dockerBridgeCidr: dockerBridgeCidr
-        outboundType: aksOutboundTrafficType
-      }
-
     enableRBAC: true
+    aadProfile: enable_aad ? {
+    managed: true
+    enableAzureRBAC: enableAzureRBAC
+    tenantID: aad_tenant_id
+  } : null
 
     autoUpgradeProfile: {
       upgradeChannel: aksUpgradeChannel
     }
 
-    autoScalerProfile: {
-      'scan-interval': scalerSettings.scanInterval
-      'scale-down-delay-after-add': scalerSettings.scaleDownDelayAfterAdd
-      'scale-down-delay-after-delete': scalerSettings.scaleDownDelayAfterDelete
-      'scale-down-delay-after-failure': scalerSettings.scaleDownDelayAfterFailure
-      'scale-down-unneeded-time': scalerSettings.scaleDownUnneededTime
-      'scale-down-unready-time': scalerSettings.scaleDownUnreadyTime
-      'scale-down-utilization-threshold': scalerSettings.utilizationThreshold
-      'max-graceful-termination-sec': scalerSettings.maxGracefulTerminationSec
-    }
+    autoScalerProfile: AutoscaleProfile
 
     apiServerAccessProfile: !empty(authorizedIPRanges) ? {
     authorizedIPRanges: authorizedIPRanges
-  } : {
-    enablePrivateCluster: enablePrivateCluster
-    privateDNSZone: enablePrivateCluster ? aksPrivateDnsZone : ''
-    enablePrivateClusterPublicFQDN: enablePrivateCluster && privateClusterDnsMethod=='none'
-  }
-  
+    } : {
+      enablePrivateCluster: enablePrivateCluster
+      privateDNSZone: enablePrivateCluster ? aksPrivateDnsZone : ''
+      enablePrivateClusterPublicFQDN: enablePrivateCluster && privateClusterDnsMethod=='none'
+    }
+
     workloadAutoScalerProfile: {
       keda: {
-        enabled: addOn.kedaEnabled
+          enabled: kedaEnabled
       }
     }
-
     oidcIssuerProfile: {
-      enabled: addOn.oidcEnabled
+      enabled: workloadIdentityEnabled
     }
-
     securityProfile: {
       defender: {
-        logAnalyticsWorkspaceResourceId: addOn.defenderEnabled ? workspaceId : null
+        logAnalyticsWorkspaceResourceId: defenderEnabled ? workspaceId : null
         securityMonitoring: {
-          enabled: addOn.defenderEnabled
+          enabled: defenderEnabled
         }
       }
     }
@@ -333,7 +461,32 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
     }
   }
 }
+@description('Specifies the name of the AKS cluster.')
+output name string = aks.name
 
+@description('Specifies the OIDC Issuer URL.')
+output aksOidcIssuerUrl string = workloadIdentityEnabled ? aks.properties.oidcIssuerProfile.issuerURL : ''
+
+@description('This output can be directly leveraged when creating a ManagedId Federated Identity')
+output aksOidcFedIdentityProperties object = {
+  issuer: workloadIdentityEnabled ? aks.properties.oidcIssuerProfile.issuerURL : ''
+  audiences: ['api://AzureADTokenExchange']
+  subject: 'system:serviceaccount:ns:svcaccount'
+}
+
+@description('Specifies the name of the AKS Managed Resource Group.')
+output aksNodeResourceGroup string = aks.properties.nodeResourceGroup
+
+
+/* _____  __       __    __  ___   ___ 
+|   ____||  |     |  |  |  | \  \ /  / 
+|  |__   |  |     |  |  |  |  \  V  /  
+|   __|  |  |     |  |  |  |   >   <   
+|  |     |  `----.|  `--'  |  /  .  \  
+|__|     |_______| \______/  /__/ \__\ */
+
+
+@description('Enable the Flux GitOps Operator')
 param fluxGitOpsAddon bool = false
 
 resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-preview' = if(fluxGitOpsAddon) {
@@ -352,24 +505,5 @@ resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-prev
   }
   dependsOn: [aks]
 }
+@description('Flux Release Namespace')
 output fluxReleaseNamespace string = fluxGitOpsAddon ? fluxAddon.properties.scope.cluster.releaseNamespace : ''
-
-
-// resource fluxAddon 'Microsoft.KubernetesConfiguration/extensions@2022-04-02-preview' = if(addOn.fluxEnabled) {
-//   name: 'flux'
-//   scope: aks
-//   properties: {
-//     extensionType: 'microsoft.flux'
-//     autoUpgradeMinorVersion: true
-//     releaseTrain: 'Stable'
-//     scope: {
-//       cluster: {
-//         releaseNamespace: 'flux-system'
-//       }
-//     }
-//     configurationProtectedSettings: {}
-//   }
-//   dependsOn: [aks]
-// }
-
-output name string = aks.name

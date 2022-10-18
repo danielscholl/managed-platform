@@ -5,9 +5,9 @@
 
 ## Background
 
-This project is a playground to look into the feasibility of a managed platform for Azure. The goal is to provide a platform that can be used to deploy and manage kuberenetes applications into Azure. A platform should be thought of as a building block that other teams can leverage to either build applications in or build on top of.  An example of building on top of a platform would be the delivery mechanism of the platform. The goal of the playground is to investigate building a Managed Application using the IaC from the platform.  To truly understand the value proposition for a Platform read through this excellent blog posting.  [What is platform engineering?](https://platformengineering.org/blog/what-is-platform-engineering) 
+This project is a playground to look into the feasibility of a managed platform for Azure. The goal is to provide a platform that can be used to deploy and manage kubernetes applications into Azure. A platform should be thought of as a building block that other teams can leverage to either build applications in or build on top of.  An example of building on top of a platform would be the delivery mechanism of the platform. The goal of the playground is to investigate building a Managed Application using the IaC from the platform.  To truly understand the value proposition for a Platform read through this excellent blog posting.  [What is platform engineering?](https://platformengineering.org/blog/what-is-platform-engineering) 
 
-Currently the Azure Managed App is built into this platform but the expectation is that it be seperated into a seperate repository.
+Currently the Azure Managed App is built into this platform but the expectation is that it be separated into a separate repository.
 
 This project attempts to leverage guidance from the following sources:
 
@@ -27,7 +27,7 @@ The guiding principal we have with this project is to focus on the the *downstre
 2. Provide best-practice defaults, then use parameters for flagging on additional options.
 3. Minimise "manual" steps for ease of automation
 4. Maintain quality through validation & CI/CD pipelines that also serve as working samples/docs
-5. Allow for platfrom deployment via Service Definition files.
+5. Allow for platform deployment via Service Definition files.
 
 ## Contributing
 
