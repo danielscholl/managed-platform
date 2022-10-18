@@ -42,7 +42,7 @@
         "label": "Compute Size",
         "toolTip": "The virtual machine size to use.",
         "recommendedSizes": [
-          "Standard_D4s_v3",
+          "Standard_DS3_v2",
           "Standard_D8s_v3"
         ],
         "options": {
