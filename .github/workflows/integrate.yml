@@ -134,7 +134,7 @@ jobs:
             if [ -z "${{ github.event.inputs.region }}" ]
             then
               echo "Region parameter not available through GitHub event data, setting default"
-              REGION="westcentralus"
+              REGION="southcentralus"
             else
               echo "Region parameter found in GitHub event (${{ github.event.inputs.region }})"
               REGION="${{ github.event.inputs.region }}"
