@@ -1,3 +1,9 @@
+/*
+  This is a custom module that configures Azure Kubernetes Service.
+
+  ** Eventually this might move to Managed-Platform-Modules. **
+*/
+
 targetScope = 'resourceGroup'
 
 /*______      ___      .______          ___      .___  ___.  _______ .___________. _______ .______          _______.
@@ -346,7 +352,6 @@ var agentPoolProfileUser = union({
 
 var agentPoolProfiles = JustUseSystemPool ? array(union(systemPoolBase, userPoolVmProfile)) : concat(array(union(systemPoolBase, SystemPoolType=='Custom' && SystemPoolCustomPreset != {} ? SystemPoolCustomPreset : systemPoolPresets[SystemPoolType])), array(agentPoolProfileUser))
 
-
 var aks_addons = union({
   azurepolicy: {
     config: {
@@ -373,6 +378,16 @@ var aks_addons = union({
     }
   }} : {})
 
+
+
+/*
+.______       _______     _______.  ______    __    __  .______        ______  _______     _______.
+|   _  \     |   ____|   /       | /  __  \  |  |  |  | |   _  \      /      ||   ____|   /       |
+|  |_)  |    |  |__     |   (----`|  |  |  | |  |  |  | |  |_)  |    |  ,----'|  |__     |   (----`
+|      /     |   __|     \   \    |  |  |  | |  |  |  | |      /     |  |     |   __|     \   \    
+|  |\  \----.|  |____.----)   |   |  `--'  | |  `--'  | |  |\  \----.|  `----.|  |____.----)   |   
+| _| `._____||_______|_______/     \______/   \______/  | _| `._____| \______||_______|_______/    
+*/
 
 resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
   name: length(name) > 63 ? substring(name, 0, 63) : name
@@ -461,6 +476,17 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-08-03-preview' = {
     }
   }
 }
+
+
+/*
+  ______    __    __  .___________..______    __    __  .___________.
+ /  __  \  |  |  |  | |           ||   _  \  |  |  |  | |           |
+|  |  |  | |  |  |  | `---|  |----`|  |_)  | |  |  |  | `---|  |----`
+|  |  |  | |  |  |  |     |  |     |   ___/  |  |  |  |     |  |     
+|  `--'  | |  `--'  |     |  |     |  |      |  `--'  |     |  |     
+ \______/   \______/      |__|     | _|       \______/      |__|     
+*/
+
 @description('Specifies the name of the AKS cluster.')
 output name string = aks.name
 
@@ -478,12 +504,14 @@ output aksOidcFedIdentityProperties object = {
 output aksNodeResourceGroup string = aks.properties.nodeResourceGroup
 
 
-/* _____  __       __    __  ___   ___ 
+/*
+ _______  __       __    __  ___   ___ 
 |   ____||  |     |  |  |  | \  \ /  / 
 |  |__   |  |     |  |  |  |  \  V  /  
 |   __|  |  |     |  |  |  |   >   <   
 |  |     |  `----.|  `--'  |  /  .  \  
-|__|     |_______| \______/  /__/ \__\ */
+|__|     |_______| \______/  /__/ \__\ 
+*/
 
 
 @description('Enable the Flux GitOps Operator')

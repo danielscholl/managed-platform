@@ -1,3 +1,11 @@
+/*
+  This is the main bicep entry file.
+
+  10.19.22: Initial Version
+--------------------------------
+  - Initial Features
+*/
+
 @description('Specify the Azure region to place the application definition.')
 param location string = resourceGroup().location
 
@@ -9,7 +17,7 @@ param location string = resourceGroup().location
 |  | |  |  |  ||   __|  |  . `  |     |  |     |  |     |  |       \_    _/   
 |  | |  '--'  ||  |____ |  |\   |     |  |     |  |     |  |         |  |     
 |__| |_______/ |_______||__| \__|     |__|     |__|     |__|         |__|     
-                                                                              */
+*/
 
 // Create a Managed User Identity for the Cluster
 module clusterIdentity 'br:managedplatform.azurecr.io/bicep/modules/platform/user-identity:1.0.1' = {
@@ -36,8 +44,7 @@ module podIdentity 'br:managedplatform.azurecr.io/bicep/modules/platform/user-id
    |   (----`---|  |----`|  |  |  | |  |_)  |      /  ^  \   |  |  __  |  |__   
     \   \       |  |     |  |  |  | |      /      /  /_\  \  |  | |_ | |   __|  
 .----)   |      |  |     |  `--'  | |  |\  \----./  _____  \ |  |__| | |  |____ 
-|_______/       |__|      \______/  | _| `._____/__/     \__\ \______| |_______|
-                                                                                
+|_______/       |__|      \______/  | _| `._____/__/     \__\ \______| |_______|                                                                 
 */
 
 @description('Provide a type for the storage account.')
@@ -46,6 +53,7 @@ param storageAccountType string
 @description('Provide a prefix name for the storage account.')
 param storageAccountPrefix string = 'sa'
 
+// Create Storage Account
 module stgModule 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-storage:1.0.1' = {
   name: 'azure_storage'
   params: {
@@ -63,9 +71,10 @@ module stgModule 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-sto
 |  '  /  |  |__   \   \/   /   \   \/   / /  ^  \   |  |  |  | |  |     `---|  |----`
 |    <   |   __|   \_    _/     \      / /  /_\  \  |  |  |  | |  |         |  |     
 |  .  \  |  |____    |  |        \    / /  _____  \ |  `--'  | |  `----.    |  |     
-|__|\__\ |_______|   |__|         \__/ /__/     \__\ \______/  |_______|    |__|     
-                                                                                     
+|__|\__\ |_______|   |__|         \__/ /__/     \__\ \______/  |_______|    |__|                                                                     
 */
+
+// Create Key Vault
 module keyvault 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-keyvault:1.0.1' = {
   name: 'azure_keyvault'
   params: {
@@ -84,6 +93,7 @@ module keyvault 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-keyv
 |__|  |__|  \______/  |__| \__| |__|     |__|      \______/  | _| `._____||__| |__| \__|  \______|                                                                                                    
 */
 
+// Create Log Analytics Workspace
 module logAnalytics 'br:managedplatform.azurecr.io/bicep/modules/platform/log-analytics:1.0.1' = {
   name: 'log_analytics'
   params: {
@@ -99,7 +109,6 @@ module logAnalytics 'br:managedplatform.azurecr.io/bicep/modules/platform/log-an
     podIdentity
   ]
 }
-
 
 
 /*
@@ -135,6 +144,7 @@ var vnetId = {
 
 var subnetId = '${vnetId[virtualNetworkNewOrExisting]}/subnets/${subnetName}'
 
+// Create Virtual Network (If Not BYO)
 module vnet 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-vnet:1.0.1' = if (virtualNetworkNewOrExisting == 'new') {
   name: 'azure_vnet'
   params: {
@@ -168,16 +178,22 @@ module vnet 'br:managedplatform.azurecr.io/bicep/modules/platform/azure-vnet:1.0
   ]
 }
 
+
 /*
 .______       _______   _______  __       _______.___________..______     ____    ____ 
 |   _  \     |   ____| /  _____||  |     /       |           ||   _  \    \   \  /   / 
 |  |_)  |    |  |__   |  |  __  |  |    |   (----`---|  |----`|  |_)  |    \   \/   /  
 |      /     |   __|  |  | |_ | |  |     \   \       |  |     |      /      \_    _/   
 |  |\  \----.|  |____ |  |__| | |  | .----)   |      |  |     |  |\  \----.   |  |     
-| _| `._____||_______| \______| |__| |_______/       |__|     | _| `._____|   |__|     
-                                                                                                                             
+| _| `._____||_______| \______| |__| |_______/       |__|     | _| `._____|   |__|                                                                                                                              
 */
 
+var imageNames = [
+  'mcr.microsoft.com/azuredocs/azure-vote-front:v1'
+  'mcr.microsoft.com/oss/bitnami/redis:6.0.8'
+]
+
+// Create a Container Registry
 module acr 'br:managedplatform.azurecr.io/bicep/modules/platform/container-registry:1.0.2' = {
   name: 'container_registry'
   params: {
@@ -199,26 +215,13 @@ module acr 'br:managedplatform.azurecr.io/bicep/modules/platform/container-regis
   ]
 }
 
-var imageNames = [
-  'mcr.microsoft.com/azuredocs/azure-vote-front:v1'
-  'mcr.microsoft.com/oss/bitnami/redis:6.0.8'
-]
-
+// Import Images
 module acrImport 'br/public:deployment-scripts/import-acr:2.0.1' = if (!empty(imageNames)) {
   name: 'imageImport'
   params: {
     acrName: acr.outputs.name
     location: location
     images: imageNames
-  }
-}
-
-module acrPool 'modules/acragentpool.bicep' = {
-  name: 'acrprivatepool'
-  params: {
-    acrName: acr.outputs.name
-    acrPoolSubnetId: subnetId
-    location: location
   }
 }
 
@@ -230,7 +233,6 @@ module acrPool 'modules/acragentpool.bicep' = {
 |    <   |  |  |  | |   _  <  |   __|  |      /     |  . `  | |   __|      |  |     |   __|     \   \    
 |  .  \  |  `--'  | |  |_)  | |  |____ |  |\  \----.|  |\   | |  |____     |  |     |  |____.----)   |   
 |__|\__\  \______/  |______/  |_______|| _| `._____||__| \__| |_______|    |__|     |_______|_______/    
-                                                                                                         
 */
 @description('The virtual machine size for the User Pool.')
 param vmSize string = 'Standard_DS3_v2'
@@ -238,6 +240,8 @@ param vmSize string = 'Standard_DS3_v2'
 @description('The number of nodes in the User Pool.')
 param nodeCount int = 3
 
+@description('The Git Repository for the Gitops Configuration.')
+var fluxConfiguration = 'https://github.com/mspnp/aks-baseline'
 
 module cluster 'modules/aks_cluster.bicep' = {
   name: 'azure_kubernetes'
@@ -260,7 +264,6 @@ module cluster 'modules/aks_cluster.bicep' = {
 
     // Configure Add Ons
     enable_aad: true
-    enableAzureRBAC : true
     workloadIdentityEnabled: true
     keyvaultEnabled: true
     fluxGitOpsAddon:true
@@ -272,9 +275,17 @@ module cluster 'modules/aks_cluster.bicep' = {
   ]
 }
 
-output aksName string = cluster.outputs.name
+//--------------Flux Config---------------
+module flux 'modules/flux_config_unified.bicep' = {
+  name: 'flux'
+  params: {
+    aksName: cluster.outputs.name
+    aksFluxAddOnReleaseNamespace: cluster.outputs.fluxReleaseNamespace
+    fluxConfigRepo: fluxConfiguration
+  }
+}
 
-
+//--------------Helm Installations---------------
 module aadWorkloadId 'modules/workloadId.bicep' = {
   name: 'aadWorkloadId-helm'
   params: {
@@ -283,13 +294,4 @@ module aadWorkloadId 'modules/workloadId.bicep' = {
   }
 }
 
-
-//--------------Flux Config---------------
-module flux 'modules/flux_config_unified.bicep' = {
-  name: 'flux'
-  params: {
-    aksName: cluster.outputs.name
-    aksFluxAddOnReleaseNamespace: cluster.outputs.fluxReleaseNamespace
-    fluxConfigRepo: 'https://github.com/mspnp/aks-baseline'
-  }
-}
+output aksName string = cluster.outputs.name

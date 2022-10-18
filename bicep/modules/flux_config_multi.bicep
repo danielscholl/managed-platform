@@ -1,14 +1,26 @@
+/*
+  This is a flux GitOps Configuration for a multi-tenancy assigned responsibility.
+  https://learn.microsoft.com/en-gb/azure/azure-arc/kubernetes/tutorial-use-gitops-flux2
+  https://github.com/fluxcd/flux2-multi-tenancy
+*/
+
+
+@description('The name of the AKS cluster.')
 param aksName string
 
+@description('The namespace for flux.')
 param aksFluxAddOnReleaseNamespace string = 'flux-system'
 
 resource aks 'Microsoft.ContainerService/managedClusters@2022-03-02-preview' existing = {
   name: aksName
 }
 
+
+
 @description('The Git Repository URL where your flux configuration is homed')
 param fluxConfigRepo string = '' //'https://github.com/Azure/gitops-flux2-kustomize-helm-mt' //'https://github.com/fluxcd/flux2-kustomize-helm-example'
 
+@description('The Git Repository Branch where your flux configuration is homed')
 param fluxConfigRepoBranch string = 'main'
 
 @description('The name of the flux configuration to apply')
@@ -25,7 +37,10 @@ var fluxRepoUsernameB64 = base64(fluxRepoUsername)
 param fluxRepoPassword string = ''
 var fluxRepoPasswordB64 = base64(fluxRepoPassword)
 
+@description('The Git Repository path for infrastructure')
 param fluxRepoInfraPath string = './infrastructure'
+
+@description('The Git Repository path for apps')
 param fluxRepoAppsPath string = './apps/staging'
 
 resource fluxConfig 'Microsoft.KubernetesConfiguration/fluxConfigurations@2022-03-01' = {
